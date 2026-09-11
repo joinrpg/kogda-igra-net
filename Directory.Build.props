@@ -1,0 +1,39 @@
+<Project>
+    <PropertyGroup>
+        <Copyright>2026 Leonid Tsarev</Copyright>
+        <Authors>Leonid Tsarev and Co</Authors>
+        <Company>kogda-igra.ru</Company>
+
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- Pack everything with embedded .pdb -->
+        <EmbedAllSources>true</EmbedAllSources>
+        <DebugType>embedded</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+
+        <UseArtifactsOutput>true</UseArtifactsOutput>
+
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <!-- CS1591: missing XML comment for publicly visible type or member -->
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+        <!-- Именно TreatWarningsAsErrors: WarningsAsErrors принимает список ID, а не булево -->
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+        <!-- Внедряет commit sha в AssemblyInformationalVersion через Microsoft.SourceLink.GitHub -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    </PropertyGroup>
+    <!--
+    Открывает internal-типы проекта XXX его тестовому проекту XXX.Tests.
+    Канон именования тестовых проектов в этом репозитории — суффикс .Tests (ровно один вариант).
+  -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+    </ItemGroup>
+    <ItemGroup>
+        <GlobalPackageReference Include="ReferenceTrimmer" Version="3.5.7" />
+        <GlobalPackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    </ItemGroup>
+</Project>

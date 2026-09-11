@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="CLAUDE.md" />
+    <File Path="README.md" />
+    <File Path="docs/README.md" />
+    <File Path="docs/adr001-repo-and-testing-strategy.md" />
+    <File Path="docs/adr002-test-stack.md" />
+    <File Path="docs/compat-tests.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="src/KogdaIgra.CompatTests/KogdaIgra.CompatTests.csproj" />
+  </Folder>
+</Solution>
