@@ -20,7 +20,7 @@ INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, statu
                       comment, sub_region_id, deleted_flag, hide_email, players_count,
                       review_count, photo_count, vk_likes)
 VALUES (901, 'Тестовая игра про дракона', 'https://example.com/dragon', 1, 900,
-        'МГ Тестовая', 'dragon@example.com', 0, 0, '', 3, 0, 0, 120, 0, 0, 0);
+        'МГ Тестовая', 'dragon@example.com', 0, 0, 'примечаниепроболото', 3, 0, 0, 120, 0, 0, 0);
 
 -- Удалённая игра: deleted_flag = 1.
 INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,

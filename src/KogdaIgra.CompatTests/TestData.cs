@@ -31,6 +31,12 @@ public static class TestData
     /// <summary>Название активной игры — ожидаемое значение для ассертов.</summary>
     public const string ActiveGameName = "Тестовая игра про дракона";
 
+    /// <summary>
+    /// Слово, которое встречается только в поле <c>comment</c> активной игры.
+    /// Поиск по нему ничего не находит — <c>comment</c> в поиск не входит.
+    /// </summary>
+    public const string CommentOnlyPhrase = "примечаниепроболото";
+
     /// <summary>Название игры из другого региона.</summary>
     public const string SaintPetersburgGameName = "Петербургская тестовая игра";
 
