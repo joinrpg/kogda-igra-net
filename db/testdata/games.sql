@@ -12,7 +12,8 @@
 
 -- Полигон. Субрегион 3 (Москва) и тип игры 1 (Полевая) уже есть в справочниках.
 INSERT INTO ki_polygons (polygon_id, polygon_name, sub_region_id, meta_polygon, deleted_flag)
-VALUES (900, 'Тестовый полигон', 3, 0, 0);
+VALUES (900, 'Тестовый полигон', 3, 0, 0),
+       (901, 'Полигон под Петербургом', 1, 0, 0);
 
 -- Обычная активная игра.
 INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,
@@ -41,6 +42,15 @@ INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, statu
 VALUES (904, 'Игра со скрытой почтой', '', 1, 900, 'МГ Скрытная', 'secret@example.com',
         0, 0, '', 3, 0, 1, NULL, 0, 0, 0);
 
+-- Игра в другом регионе: субрегион 1 (Санкт-Петербург) относится к региону 2,
+-- тогда как остальные тестовые игры — к региону 3 (Москва). Нужна, чтобы проверять
+-- фильтр по регионам: /spb/ против /msk/.
+INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,
+                      comment, sub_region_id, deleted_flag, hide_email, players_count,
+                      review_count, photo_count, vk_likes)
+VALUES (905, 'Петербургская тестовая игра', '', 1, 901, 'МГ Невская', 'spb@example.com',
+        0, 0, '', 1, 0, 0, 50, 0, 0, 0);
+
 -- Даты. "order" = 0 — текущая дата игры; "time" — длительность В ДНЯХ, считая с единицы
 -- (calendar.php: days = time - 1). hidden_flag = 1 убрал бы дату из выдачи совсем.
 -- Год подставляется харнессом: PHP берёт текущий год из date() в зоне Europe/Moscow.
@@ -50,7 +60,8 @@ VALUES (9001, 901, make_date(:year, 7, 15), 3, 0, 0),
        (9002, 901, make_date(:year, 5, 1), 2, 0, 1),
        (9003, 902, make_date(:year, 7, 20), 1, 0, 0),
        (9004, 903, make_date(:year, 7, 25), 1, 0, 0),
-       (9005, 904, make_date(:year, 8, 10), 1, 0, 0);
+       (9005, 904, make_date(:year, 8, 10), 1, 0, 0),
+       (9006, 905, make_date(:year, 9, 5), 2, 0, 0);
 
 -- ki_updates присоединяется через INNER JOIN (MAX(update_date) по игре).
 -- Без строки здесь игра не появится ни на одной странице.
@@ -58,7 +69,8 @@ INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, u
 VALUES (9101, 901, make_date(:year, 1, 10), 1, 0),
        (9102, 902, make_date(:year, 1, 10), 1, 0),
        (9103, 903, make_date(:year, 1, 10), 1, 0),
-       (9104, 904, make_date(:year, 1, 10), 1, 0);
+       (9104, 904, make_date(:year, 1, 10), 1, 0),
+       (9105, 905, make_date(:year, 1, 10), 1, 0);
 
 -- Кэш годов: на список игр не влияет, но без него пустует навигация по годам
 -- (top_menu.php: write_years_list). Заполняется тем же запросом, что и

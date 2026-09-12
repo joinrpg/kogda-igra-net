@@ -21,12 +21,18 @@ public static class TestData
         /// <summary>Игра с <c>deleted_flag = -1</c> — добавлена пользователем, ждёт модерации.</summary>
         public const int AwaitingModeration = 903;
 
-        /// <summary>Игра с <c>hide_email = 0</c>, но адресом, который не должен утечь в разметку.</summary>
+        /// <summary>Игра с <c>hide_email = 1</c>: адрес не должен утечь в разметку.</summary>
         public const int WithHiddenEmail = 904;
+
+        /// <summary>Игра в субрегионе Санкт-Петербург (регион 2) — остальные в регионе 3.</summary>
+        public const int InSaintPetersburg = 905;
     }
 
     /// <summary>Название активной игры — ожидаемое значение для ассертов.</summary>
     public const string ActiveGameName = "Тестовая игра про дракона";
+
+    /// <summary>Название игры из другого региона.</summary>
+    public const string SaintPetersburgGameName = "Петербургская тестовая игра";
 
     /// <summary>
     /// Год, в котором PHP-приложение показывает календарь по умолчанию.

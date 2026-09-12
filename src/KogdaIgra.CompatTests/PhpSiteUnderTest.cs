@@ -55,7 +55,11 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         private set;
     }
 
-    public HttpClient CreateClient() => new() { BaseAddress = BaseUrl };
+    public HttpClient CreateClient(bool followRedirects = true)
+        => new(new HttpClientHandler { AllowAutoRedirect = followRedirects })
+        {
+            BaseAddress = BaseUrl,
+        };
 
     public async Task InitializeAsync()
     {
