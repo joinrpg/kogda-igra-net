@@ -74,8 +74,10 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     {
         network = new NetworkBuilder().Build();
 
-        // Версия должна совпадать с той, на которой работает прод PHP-версии.
-        database = new PostgreSqlBuilder("postgres:14.2")
+        // Версия прода PHP-версии: dev и prod — одна и та же СУБД в Yandex Cloud
+        // (видно по utils/migrate-db в PHP-репозитории), pg_dump отчитался о 15.18.
+        // docker-compose.yml PHP-репозитория указывает 14.2 — он отстал от реальности.
+        database = new PostgreSqlBuilder("postgres:15.18")
             .WithDatabase(DatabaseName)
             .WithUsername(DatabaseUser)
             .WithPassword(DatabasePassword)
@@ -84,7 +86,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             .Build();
 
         await database.StartAsync();
-        await DatabaseSchema.ApplyAsync(database.GetConnectionString());
+        await DatabaseSchema.ApplyAsync(database, DatabaseUser, DatabaseName);
 
         // Порт выбираем сами: PHP-приложению нужно знать свой публичный адрес (SITENAME_HOST)
         // ещё до старта, поэтому случайный порт от Testcontainers тут не подходит.
@@ -144,7 +146,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             throw new InvalidOperationException("БД не поднята.");
         }
 
-        await DatabaseSchema.ResetAsync(database.GetConnectionString(), cancellationToken);
+        await DatabaseSchema.ResetAsync(database, DatabaseUser, DatabaseName, cancellationToken);
     }
 
     private static int FindFreePort()

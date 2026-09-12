@@ -1,407 +1,1057 @@
--- kogda-igra.ru database schema (PostgreSQL dialect).
--- Converted from the legacy phpMyAdmin MySQL dumps of the PHP site.
--- Column and table names are preserved verbatim; the application depends on them.
--- Reserved words ("order", "desc", "time", "begin", "year", "comment") are
--- double-quoted, which keeps the identifier exactly as it was in MySQL.
+--
+-- PostgreSQL database dump
+--
 
--- =====================================================================
--- Reference / dictionary tables
--- =====================================================================
+\restrict YKQmch2d1TBx8do79bLQPwafEzlqXwjdriU98MMicVCSdM7cRIfJD306zDCENbT
 
-CREATE TABLE ki_regions (
-  region_id smallserial PRIMARY KEY,
-  region_name varchar(100) NOT NULL DEFAULT '',
-  region_code varchar(10) NOT NULL DEFAULT '',
-  region_experimental smallint NOT NULL DEFAULT 0
+-- Dumped from database version 15.18 (Ubuntu 15.18-201-yandex.55830.ec642aad1f)
+-- Dumped by pg_dump version 15.18 (Debian 15.18-1.pgdg13+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: ki_add_uri; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_add_uri (
+    add_uri_id bigint NOT NULL,
+    uri text DEFAULT NULL::character varying,
+    allrpg_info_id bigint,
+    resolved smallint DEFAULT '0'::smallint
 );
 
-CREATE UNIQUE INDEX idx_ki_regions_name_code ON ki_regions (region_name, region_code);
-CREATE INDEX idx_ki_regions_experimental ON ki_regions (region_experimental);
 
-CREATE TABLE ki_sub_regions (
-  sub_region_id serial PRIMARY KEY,
-  sub_region_name varchar(100) NOT NULL DEFAULT '',
-  sub_region_disp_name varchar(20) NOT NULL DEFAULT '',
-  region_id integer NOT NULL DEFAULT 0
+--
+-- Name: ki_add_uri_add_uri_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_add_uri_add_uri_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_add_uri_add_uri_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_add_uri_add_uri_id_seq OWNED BY public.ki_add_uri.add_uri_id;
+
+
+--
+-- Name: ki_game_date; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_game_date (
+    game_date_id bigint NOT NULL,
+    game_id bigint,
+    begin date,
+    "time" smallint,
+    hidden_flag smallint,
+    "order" bigint
 );
 
-CREATE INDEX idx_ki_sub_regions_region_id ON ki_sub_regions (region_id);
 
-CREATE TABLE ki_game_types (
-  game_type_id serial PRIMARY KEY,
-  game_type_name varchar(50) NOT NULL DEFAULT '',
-  show_all_regions smallint NOT NULL DEFAULT 0,
-  game_type_style varchar(50) NOT NULL DEFAULT '',
-  game_type_real_game smallint NOT NULL DEFAULT 0
+--
+-- Name: ki_game_date_game_date_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_game_date_game_date_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_game_date_game_date_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_game_date_game_date_id_seq OWNED BY public.ki_game_date.game_date_id;
+
+
+--
+-- Name: ki_game_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_game_types (
+    game_type_id bigint NOT NULL,
+    game_type_name text DEFAULT ''::character varying,
+    show_all_regions smallint DEFAULT '0'::smallint,
+    game_type_style text DEFAULT ''::character varying,
+    game_type_real_game smallint DEFAULT '0'::smallint
 );
 
-CREATE INDEX idx_ki_game_types_show_all_regions ON ki_game_types (show_all_regions);
 
-CREATE TABLE ki_status (
-  status_id integer NOT NULL PRIMARY KEY,
-  status_name varchar(20) NOT NULL,
-  status_style varchar(20) NOT NULL,
-  problem_status smallint NOT NULL,
-  future_only_status smallint NOT NULL,
-  cancelled_status smallint NOT NULL DEFAULT 0,
-  show_review_flag smallint NOT NULL DEFAULT 0,
-  show_date_flag smallint NOT NULL DEFAULT 0,
-  good_status smallint NOT NULL DEFAULT 0
+--
+-- Name: ki_game_types_game_type_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_game_types_game_type_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_game_types_game_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_game_types_game_type_id_seq OWNED BY public.ki_game_types.game_type_id;
+
+
+--
+-- Name: ki_games; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_games (
+    id bigint NOT NULL,
+    name text DEFAULT ''::character varying,
+    uri text DEFAULT ''::character varying,
+    type smallint DEFAULT '0'::smallint,
+    polygon integer DEFAULT 0,
+    mg text DEFAULT ''::character varying,
+    email text DEFAULT ''::character varying,
+    show_flags bigint DEFAULT '0'::bigint,
+    status smallint DEFAULT '0'::smallint,
+    comment text DEFAULT ''::character varying,
+    sub_region_id bigint DEFAULT '0'::bigint,
+    deleted_flag smallint DEFAULT '0'::smallint,
+    hide_email smallint DEFAULT '0'::smallint,
+    players_count bigint,
+    review_count bigint DEFAULT '0'::bigint,
+    allrpg_info_id bigint,
+    photo_count bigint DEFAULT '0'::bigint,
+    redirect_id bigint,
+    vk_likes bigint DEFAULT '0'::bigint,
+    vk_club text DEFAULT NULL::character varying,
+    lj_comm text DEFAULT NULL::character varying,
+    fb_comm text DEFAULT NULL::character varying,
+    telegram_channel text DEFAULT NULL::character varying,
+    telegram_contact text DEFAULT NULL::character varying
 );
 
-CREATE TABLE ki_update_types (
-  ki_update_type_id serial PRIMARY KEY,
-  ki_update_type_name varchar(50) NOT NULL DEFAULT '',
-  update_type_polygon_flag smallint NOT NULL DEFAULT 0,
-  update_type_game_flag smallint NOT NULL DEFAULT 0,
-  update_type_photo_flag smallint NOT NULL DEFAULT 0,
-  update_type_review_flag smallint NOT NULL DEFAULT 0,
-  -- advertise_update_flag: "Рекламировать ли на главной странице"
-  advertise_update_flag smallint NOT NULL DEFAULT 0,
-  update_type_user_text varchar(50) DEFAULT NULL
+
+--
+-- Name: ki_games_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_games_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_games_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_games_id_seq OWNED BY public.ki_games.id;
+
+
+--
+-- Name: ki_photo; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_photo (
+    photo_id bigint NOT NULL,
+    game_id bigint,
+    photo_author text DEFAULT NULL::character varying,
+    photo_uri text,
+    author_id bigint,
+    photo_comment text DEFAULT NULL::character varying,
+    photo_good_flag smallint DEFAULT '0'::smallint
 );
 
--- =====================================================================
--- Users and privileges
--- =====================================================================
 
-CREATE TABLE users (
-  user_id serial PRIMARY KEY,
-  username varchar(50) NOT NULL DEFAULT '',
-  email varchar(100) NOT NULL DEFAULT '',
-  -- MySQL default was the zero date '0000-00-00 00:00:00', which PostgreSQL
-  -- cannot represent; the column is nullable, so the default is simply dropped.
-  lastvisit timestamp DEFAULT NULL,
-  create_date date DEFAULT NULL,
-  editor_flag smallint NOT NULL DEFAULT 0
+--
+-- Name: ki_photo_photo_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_photo_photo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_photo_photo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_photo_photo_id_seq OWNED BY public.ki_photo.photo_id;
+
+
+--
+-- Name: ki_polygons; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_polygons (
+    polygon_id bigint NOT NULL,
+    polygon_name text DEFAULT ''::character varying,
+    sub_region_id bigint DEFAULT '0'::bigint,
+    meta_polygon bigint DEFAULT '0'::bigint,
+    deleted_flag smallint DEFAULT '0'::smallint
 );
 
-CREATE TABLE privs (
-  id serial PRIMARY KEY,
-  name varchar(50) NOT NULL DEFAULT '',
-  "desc" varchar(150) NOT NULL DEFAULT '',
-  hidden_flag smallint NOT NULL DEFAULT 0
+
+--
+-- Name: ki_polygons_polygon_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_polygons_polygon_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_polygons_polygon_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_polygons_polygon_id_seq OWNED BY public.ki_polygons.polygon_id;
+
+
+--
+-- Name: ki_regions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_regions (
+    region_id integer NOT NULL,
+    region_name text DEFAULT ''::character varying,
+    region_code text DEFAULT ''::character varying,
+    region_experimental smallint DEFAULT '0'::smallint
 );
 
-CREATE TABLE user_privs (
-  uid integer NOT NULL DEFAULT 0,
-  pid integer NOT NULL DEFAULT 0,
-  PRIMARY KEY (uid, pid)
+
+--
+-- Name: ki_regions_region_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_regions_region_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_regions_region_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_regions_region_id_seq OWNED BY public.ki_regions.region_id;
+
+
+--
+-- Name: ki_review; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_review (
+    review_id bigint NOT NULL,
+    game_id bigint,
+    author_name text DEFAULT NULL::character varying,
+    topic_id bigint,
+    review_uri text DEFAULT NULL::character varying,
+    show_review_flag smallint,
+    author_id bigint
 );
 
--- =====================================================================
--- Core site tables
--- =====================================================================
 
-CREATE TABLE ki_polygons (
-  polygon_id serial PRIMARY KEY,
-  polygon_name varchar(100) NOT NULL DEFAULT '',
-  sub_region_id integer NOT NULL DEFAULT 0,
-  meta_polygon integer NOT NULL DEFAULT 0,
-  deleted_flag smallint NOT NULL DEFAULT 0
+--
+-- Name: ki_review_review_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_review_review_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_review_review_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_review_review_id_seq OWNED BY public.ki_review.review_id;
+
+
+--
+-- Name: ki_status; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_status (
+    status_id bigint NOT NULL,
+    status_name text,
+    status_style text,
+    problem_status smallint,
+    future_only_status smallint,
+    cancelled_status smallint DEFAULT '0'::smallint,
+    show_review_flag smallint DEFAULT '0'::smallint,
+    show_date_flag smallint DEFAULT '0'::smallint,
+    good_status smallint DEFAULT '0'::smallint
 );
 
-CREATE TABLE ki_games (
-  id serial PRIMARY KEY,
-  name varchar(100) NOT NULL DEFAULT '',
-  uri varchar(100) NOT NULL DEFAULT '',
-  type smallint NOT NULL DEFAULT 0,
-  polygon integer NOT NULL DEFAULT 0,
-  mg varchar(100) NOT NULL DEFAULT '',
-  email varchar(100) NOT NULL DEFAULT '',
-  show_flags integer NOT NULL DEFAULT 0,
-  status smallint NOT NULL DEFAULT 0,
-  "comment" varchar(100) NOT NULL DEFAULT '',
-  sub_region_id integer NOT NULL DEFAULT 0,
-  deleted_flag smallint NOT NULL DEFAULT 0,
-  hide_email smallint NOT NULL DEFAULT 0,
-  players_count integer DEFAULT NULL,
-  review_count integer NOT NULL DEFAULT 0,
-  allrpg_info_id integer DEFAULT NULL,
-  photo_count integer NOT NULL DEFAULT 0,
-  redirect_id integer DEFAULT NULL,
-  vk_likes integer NOT NULL DEFAULT 0,
-  vk_club varchar(40) DEFAULT NULL,
-  lj_comm varchar(40) DEFAULT NULL,
-  fb_comm varchar(40) DEFAULT NULL
+
+--
+-- Name: ki_sub_regions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_sub_regions (
+    sub_region_id bigint NOT NULL,
+    sub_region_name text DEFAULT ''::character varying,
+    sub_region_disp_name text DEFAULT ''::character varying,
+    region_id bigint DEFAULT '0'::bigint
 );
 
-CREATE INDEX idx_ki_games_type ON ki_games (type);
-CREATE INDEX idx_ki_games_polygon ON ki_games (polygon);
 
-CREATE TABLE ki_game_date (
-  game_date_id serial PRIMARY KEY,
-  game_id integer NOT NULL,
-  "begin" date NOT NULL,
-  "time" integer NOT NULL,
-  hidden_flag smallint NOT NULL,
-  "order" integer NOT NULL
+--
+-- Name: ki_sub_regions_sub_region_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_sub_regions_sub_region_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_sub_regions_sub_region_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_sub_regions_sub_region_id_seq OWNED BY public.ki_sub_regions.sub_region_id;
+
+
+--
+-- Name: ki_update_types; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_update_types (
+    ki_update_type_id bigint NOT NULL,
+    ki_update_type_name text DEFAULT ''::character varying,
+    update_type_polygon_flag smallint DEFAULT '0'::smallint,
+    update_type_game_flag smallint DEFAULT '0'::smallint,
+    update_type_photo_flag smallint DEFAULT '0'::smallint,
+    update_type_review_flag smallint DEFAULT '0'::smallint,
+    advertise_update_flag smallint DEFAULT '0'::smallint,
+    update_type_user_text text DEFAULT NULL::character varying
 );
 
-CREATE INDEX idx_ki_game_date_game_id_order ON ki_game_date (game_id, "order");
 
-CREATE TABLE ki_photo (
-  photo_id serial PRIMARY KEY,
-  game_id integer NOT NULL,
-  photo_author varchar(40) DEFAULT NULL,
-  photo_uri varchar(300) NOT NULL,
-  author_id integer DEFAULT NULL,
-  photo_comment varchar(200) DEFAULT NULL,
-  photo_good_flag smallint NOT NULL DEFAULT 0
+--
+-- Name: ki_update_types_ki_update_type_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_update_types_ki_update_type_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_update_types_ki_update_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_update_types_ki_update_type_id_seq OWNED BY public.ki_update_types.ki_update_type_id;
+
+
+--
+-- Name: ki_updates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_updates (
+    ki_update_id bigint NOT NULL,
+    ki_update_type_id bigint DEFAULT '0'::bigint,
+    user_id bigint DEFAULT '0'::bigint,
+    update_date timestamp with time zone,
+    game_id bigint,
+    polygon_id bigint,
+    photo_id bigint,
+    updated_user_id bigint,
+    msg text,
+    ip_address text DEFAULT NULL::character varying,
+    review_id bigint,
+    add_uri_id bigint
 );
 
-CREATE INDEX idx_ki_photo_game_id ON ki_photo (game_id);
 
-CREATE TABLE ki_review (
-  review_id serial PRIMARY KEY,
-  game_id integer NOT NULL,
-  author_name varchar(100) DEFAULT NULL,
-  topic_id integer NOT NULL,
-  review_uri varchar(200) DEFAULT NULL,
-  show_review_flag smallint NOT NULL,
-  author_id integer DEFAULT NULL
+--
+-- Name: ki_updates_ki_update_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ki_updates_ki_update_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ki_updates_ki_update_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ki_updates_ki_update_id_seq OWNED BY public.ki_updates.ki_update_id;
+
+
+--
+-- Name: ki_years_cache; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_years_cache (
+    year smallint DEFAULT '0'::smallint,
+    region_id smallint DEFAULT '0'::smallint
 );
 
-CREATE INDEX idx_ki_review_game_id ON ki_review (game_id);
-CREATE INDEX idx_ki_review_game_review ON ki_review (game_id, review_id);
 
-CREATE TABLE ki_updates (
-  ki_update_id serial PRIMARY KEY,
-  ki_update_type_id integer NOT NULL DEFAULT 0,
-  user_id integer NOT NULL DEFAULT 0,
-  -- MySQL default '0000-00-00 00:00:00' dropped (no PostgreSQL equivalent).
-  update_date timestamp NOT NULL,
-  game_id integer DEFAULT NULL,
-  polygon_id integer DEFAULT NULL,
-  photo_id integer DEFAULT NULL,
-  updated_user_id integer DEFAULT NULL,
-  msg varchar(300) NOT NULL,
-  ip_address varchar(45) DEFAULT NULL,
-  review_id integer DEFAULT NULL,
-  add_uri_id integer DEFAULT NULL
+--
+-- Name: ki_zayavka_allrpg; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ki_zayavka_allrpg (
+    allrpg_zayvka_id bigint NOT NULL,
+    game_id bigint,
+    name text,
+    opened smallint DEFAULT '1'::smallint
 );
 
-CREATE INDEX idx_ki_updates_date_game ON ki_updates (update_date, game_id);
-CREATE INDEX idx_ki_updates_photo_id ON ki_updates (photo_id);
 
-CREATE TABLE ki_add_uri (
-  add_uri_id serial PRIMARY KEY,
-  uri varchar(300) DEFAULT NULL,
-  allrpg_info_id integer DEFAULT NULL,
-  resolved smallint NOT NULL DEFAULT 0
+--
+-- Name: news; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.news (
+    news_id bigint NOT NULL,
+    news_date timestamp with time zone,
+    news_author text DEFAULT ''::character varying,
+    news_header text DEFAULT ''::character varying,
+    news_text text
 );
 
-CREATE INDEX idx_ki_add_uri_resolved ON ki_add_uri (resolved);
 
--- allrpg_zayvka_id is spelled exactly as in the legacy dump (not a typo to fix);
--- it carries the external allrpg id, so it has no AUTO_INCREMENT.
-CREATE TABLE ki_zayavka_allrpg (
-  allrpg_zayvka_id integer NOT NULL PRIMARY KEY,
-  game_id integer DEFAULT NULL,
-  name varchar(500) NOT NULL,
-  opened smallint NOT NULL DEFAULT 1
+--
+-- Name: news_news_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.news_news_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: news_news_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.news_news_id_seq OWNED BY public.news.news_id;
+
+
+--
+-- Name: news_tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.news_tags (
+    nid bigint DEFAULT '0'::bigint NOT NULL,
+    tid bigint DEFAULT '0'::bigint NOT NULL
 );
 
--- Derived cache table: no primary key in the original dump, only a unique key.
-CREATE TABLE ki_years_cache (
-  "year" smallint NOT NULL DEFAULT 0,
-  region_id smallint NOT NULL DEFAULT 0
+
+--
+-- Name: old_games; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.old_games (
+    old_game_id bigint NOT NULL,
+    game_date text,
+    game_name text,
+    game_region text,
+    game_uri text
 );
 
-CREATE UNIQUE INDEX idx_ki_years_cache_year_region ON ki_years_cache ("year", region_id);
-CREATE INDEX idx_ki_years_cache_region_id ON ki_years_cache (region_id);
 
-CREATE TABLE old_games (
-  old_game_id serial PRIMARY KEY,
-  game_date varchar(300) NOT NULL,
-  game_name varchar(300) NOT NULL,
-  game_region varchar(300) NOT NULL,
-  game_uri varchar(300) NOT NULL
+--
+-- Name: old_games_old_game_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.old_games_old_game_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: old_games_old_game_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.old_games_old_game_id_seq OWNED BY public.old_games.old_game_id;
+
+
+--
+-- Name: privs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.privs (
+    id bigint NOT NULL,
+    name text DEFAULT ''::character varying,
+    "desc" text DEFAULT ''::character varying,
+    hidden_flag smallint DEFAULT '0'::smallint
 );
 
--- =====================================================================
--- LEGACY: Bastilia news tables (originally cp1251). Kept because old code
--- may still reference them; not used by the current calendar.
--- =====================================================================
 
-CREATE TABLE tags (
-  id serial PRIMARY KEY,
-  uri varchar(30) NOT NULL DEFAULT '',
-  tag_name varchar(50) NOT NULL DEFAULT ''
+--
+-- Name: privs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.privs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: privs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.privs_id_seq OWNED BY public.privs.id;
+
+
+--
+-- Name: tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tags (
+    id bigint NOT NULL,
+    uri text DEFAULT ''::character varying,
+    tag_name text DEFAULT ''::character varying
 );
 
-CREATE UNIQUE INDEX idx_tags_uri ON tags (uri);
-CREATE UNIQUE INDEX idx_tags_name ON tags (tag_name);
 
--- LEGACY table `news` ("News information" in the MySQL dump).
-CREATE TABLE news (
-  news_id serial PRIMARY KEY,
-  -- MySQL default '0000-00-00 00:00:00' dropped (no PostgreSQL equivalent).
-  news_date timestamp NOT NULL,
-  news_author varchar(15) NOT NULL DEFAULT '',
-  news_header varchar(80) NOT NULL DEFAULT '',
-  news_text text NOT NULL
+--
+-- Name: tags_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tags_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
+
+
+--
+-- Name: user_privs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_privs (
+    uid bigint DEFAULT '0'::bigint NOT NULL,
+    pid bigint DEFAULT '0'::bigint NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_news_date ON news (news_date);
--- MySQL FULLTEXT KEY `news_text` has no direct equivalent; replaced by a GIN
--- index over to_tsvector with an explicit ('simple') config so it is immutable.
-CREATE INDEX idx_news_text_fts ON news USING gin (to_tsvector('simple', news_text));
 
--- LEGACY link table between `news` and `tags`.
-CREATE TABLE news_tags (
-  nid integer NOT NULL DEFAULT 0,
-  tid integer NOT NULL DEFAULT 0,
-  PRIMARY KEY (nid, tid)
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    user_id bigint NOT NULL,
+    username text DEFAULT ''::character varying,
+    email text DEFAULT ''::character varying,
+    lastvisit timestamp with time zone,
+    create_date date,
+    editor_flag smallint DEFAULT '0'::smallint
 );
 
--- =====================================================================
--- Reference data
--- =====================================================================
 
-INSERT INTO ki_regions (region_id, region_name, region_code, region_experimental) VALUES
-(1, 'Россия', '', 0),
-(2, 'Северо-Запад', 'spb', 0),
-(3, 'Москва и Центральный регион', 'msk', 0),
-(5, 'Урал', 'ural', 0),
-(6, 'Сибирь', 'sibir', 0),
-(7, 'Юг России', 'south', 0),
-(8, 'Дальний восток', 'dv', 0),
-(9, 'Поволжье', 'volga', 0);
+--
+-- Name: users_user_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
 
-INSERT INTO ki_sub_regions (sub_region_id, sub_region_name, sub_region_disp_name, region_id) VALUES
-(1, 'Санкт-Петербург', 'СПб', 2),
-(2, 'Ленинградская область', 'СПб', 2),
-(3, 'Москва', 'Мск', 3),
-(4, 'Московская область', 'Мск', 3),
-(5, 'Тверская область', 'Тверь', 3),
-(6, 'Владимирская область', 'Влад', 3),
-(7, 'Архангельская область', 'Арх', 2),
-(8, 'Новгородская область', 'Новг', 2),
-(9, 'Карелия', 'Карел', 2),
-(10, 'Коми', 'Коми', 2),
-(11, 'Вологодская область', 'Волог', 2),
-(12, 'Калининградская область', 'Клнград', 2),
-(13, 'Мурманская область', 'Мурм', 2),
-(14, 'Псковская область', 'Псков', 2),
-(15, 'Ненецкий автономный округ', 'Ненец', 2),
-(17, 'Татарстан', 'Казань', 9),
-(18, 'Томская область', 'Томск', 6),
-(19, 'Башкортостан', 'Бшк', 9),
-(20, 'Нижегородская область', 'Нижн', 9),
-(21, 'Самарская область', 'Смр', 9),
-(22, 'Тульская область', 'Тула', 3),
-(23, 'Рязанская область', 'Ряз', 3),
-(24, 'Свердловская область', 'Сврд', 5),
-(25, 'Челябинская область', 'Члб', 5),
-(26, 'Орловская область', 'Орёл', 3),
-(27, 'Калужская область', 'Калуга', 3),
-(28, 'Пермский край', 'Пермь', 9),
-(29, 'Оренбургская область', 'Орен', 9),
-(30, 'Тюменская область', 'Тюм', 5),
-(31, 'Курганская область', 'Кург', 5),
-(32, 'Курская область', 'Курск', 3),
-(33, 'Белгородская область', 'Белг', 3),
-(34, 'Воронежская область', 'Врнж', 3),
-(35, 'Ханты-Мансийский автономный округ', 'ХМАО', 5),
-(36, 'Ямало-Ненецкий автономный округ', 'ЯНАО', 5),
-(37, 'Ярославская область', 'Яров', 3),
-(38, 'Красноярский край', 'Крс', 6),
-(39, 'Новосибирская область', 'Нвсиб', 6),
-(40, 'Адыгея', 'Адг', 7),
-(41, 'Астраханская область', 'Астрх', 7),
-(42, 'Волгоградская область', 'Влгр', 7),
-(43, 'Калмыкий', 'Клмк', 7),
-(44, 'Ростовская область', 'Рств', 7),
-(45, 'Краснодарский край', 'Крсдар', 7),
-(46, 'Ставропольский Край', 'Стврп', 7),
-(47, 'Тамбовская область', 'Тмбв', 3),
-(48, 'Бурятия', 'Бурят', 6),
-(49, 'Алтай (Республика)', 'Алт', 6),
-(50, 'Забайкальский край', 'Збкл', 6),
-(51, 'Хакасия', 'Хкс', 6),
-(52, 'Тыва', 'Тыв', 6),
-(53, 'Алтайский край', 'Алткр', 6),
-(59, 'Саха (Якутия)', 'Якт', 8),
-(55, 'Иркутская область', 'Иркт', 6),
-(56, 'Кемеровская область', 'Кмрв', 6),
-(57, 'Омская область', 'Омск', 6),
-(60, 'Хабаровский край', 'Хабр', 8),
-(61, 'Амурская область', 'Амур', 8),
-(62, 'Камчатский край', 'Камч', 8),
-(63, 'Магаданская область', 'Магад', 8),
-(64, 'Сахалинская область', 'Схлн', 8),
-(65, 'Еврейская автономная область', 'ЕАО', 8),
-(66, 'Чукотский автономный округ', 'ЧАО', 8),
-(67, 'Приморский край', 'Влдвст', 8),
-(68, 'Костромская область', 'Костром', 3),
-(69, 'Ижевская область', 'Ижв', 9),
-(70, 'Кировская область', 'Крв', 9),
-(71, 'Республика Марий Эл', 'МрЭл', 9),
-(72, 'Мордовия', 'Мрдв', 9),
-(73, 'Пензенская область', 'Пенза', 9),
-(74, 'Саратовская область', 'Сртв', 9),
-(75, 'Удмуртская республика', 'Удмрт', 9),
-(76, 'Ульяновская область', 'Улвн', 9),
-(77, 'Чувашская область', 'Чвш', 9);
+CREATE SEQUENCE public.users_user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
-INSERT INTO ki_game_types (game_type_id, game_type_name, show_all_regions, game_type_style, game_type_real_game) VALUES
-(1, 'Полевая', 0, '', 1),
-(2, 'Городская', 0, '', 1),
-(3, 'На&nbsp;турбазе', 0, '', 1),
-(4, 'Павильонная', 0, '', 0),
-(5, 'Конвент', 1, '', 0),
-(6, 'Бал', 0, '', 0),
-(7, 'Маневры', 0, '', 0),
-(8, 'Городская + Полевая', 0, '', 1),
-(9, 'Городская + На турбазе', 0, '', 1),
-(10, 'Турнир', 0, '', 0),
-(11, 'Подземная', 0, '', 1),
-(12, 'страйкбол', 0, '', 0);
 
-INSERT INTO ki_status (status_id, status_name, status_style, problem_status, future_only_status, cancelled_status, show_review_flag, show_date_flag, good_status) VALUES
-(0, 'OK', 'status-ok', 0, 1, 0, 1, 1, 1),
-(1, 'Прошла', 'status-finish', 0, 0, 0, 1, 1, 1),
-(2, '???', 'status-unknown', 1, 0, 0, 0, 1, 0),
-(3, 'Отложена', 'status-postponedd', 0, 0, 1, 0, 1, 0),
-(4, 'Дата?', 'status-date', 1, 0, 0, 0, 0, 0),
-(5, 'Отменена', 'status-canceled', 0, 0, 1, 0, 1, 0);
+--
+-- Name: users_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
 
-INSERT INTO ki_update_types (ki_update_type_id, ki_update_type_name, update_type_polygon_flag, update_type_game_flag, update_type_photo_flag, update_type_review_flag, advertise_update_flag, update_type_user_text) VALUES
-(1, 'Добавлена новая игра', 0, 1, 0, 0, 1, 'игра %game%'),
-(2, 'Изменено описание игры', 0, 1, 0, 0, 0, NULL),
-(3, 'Игра удалена из календаря', 0, 1, 0, 0, 0, NULL),
-(5, 'Изменена дата игры', 0, 1, 0, 0, 0, NULL),
-(6, 'Добавлена новость', 0, 0, 0, 0, 1, 'на сайте:'),
-(7, 'Игра восстановлена в календаре', 0, 1, 0, 0, 0, NULL),
-(8, 'У игры изменился статус', 0, 1, 0, 0, 0, NULL),
-(9, 'Удален полигон', 1, 0, 0, 0, 0, NULL),
-(10, 'Добавлен новый полигон', 1, 0, 0, 0, 0, NULL),
-(11, 'Полигон переименован', 1, 0, 0, 0, 0, NULL),
-(12, 'Полигон восстановлен', 1, 0, 0, 0, 0, NULL),
-(13, 'Добавлена новая рецензия', 0, 1, 0, 1, 1, '%review_link% на игру %game% от %updated_user%'),
-(14, 'Удалена рецензия', 0, 1, 0, 1, 0, NULL),
-(15, 'Добавлен фотоотчет', 0, 1, 1, 0, 1, '%photo% к игре %game% от %updated_user%'),
-(16, 'Изменен фотоотчет', 0, 1, 1, 0, 0, NULL),
-(17, 'Удален фотоотчет', 0, 1, 1, 0, 0, NULL),
-(18, 'Автор ассоциирован с ЖЖ', 0, 0, 0, 0, 0, NULL),
-(19, 'Игра добавлена пользователем', 0, 1, 0, 0, 0, NULL),
-(20, 'Игра проверена редактором', 0, 1, 0, 0, 1, 'игра %game%'),
-(21, 'Рецензия восстановлена', 0, 1, 0, 1, 0, NULL);
+ALTER SEQUENCE public.users_user_id_seq OWNED BY public.users.user_id;
 
-INSERT INTO privs (id, name, "desc", hidden_flag) VALUES
-(1, 'BASTILIA_NEWS', 'Новости на Бастилии', 1),
-(2, 'USERS_CONTROL', 'Администратор пользователей', 0),
-(3, 'VIEW_SPB_GAMES', 'Приватные игры в СПБ', 1),
-(4, 'EDIT_GAMES', 'Редактор календаря', 0),
-(5, 'EDIT_POLYGONS', 'Редактор полигонов', 0),
-(6, 'PHOTO', 'Фотомодератор', 0),
-(7, 'PHOTO_SELF', 'Доверенный фотограф', 0);
 
--- Reference rows above carry explicit ids, so the serial sequences must be
--- advanced past them or the next INSERT would collide.
-SELECT setval(pg_get_serial_sequence('ki_regions', 'region_id'), (SELECT max(region_id) FROM ki_regions));
-SELECT setval(pg_get_serial_sequence('ki_sub_regions', 'sub_region_id'), (SELECT max(sub_region_id) FROM ki_sub_regions));
-SELECT setval(pg_get_serial_sequence('ki_game_types', 'game_type_id'), (SELECT max(game_type_id) FROM ki_game_types));
-SELECT setval(pg_get_serial_sequence('ki_update_types', 'ki_update_type_id'), (SELECT max(ki_update_type_id) FROM ki_update_types));
-SELECT setval(pg_get_serial_sequence('privs', 'id'), (SELECT max(id) FROM privs));
+--
+-- Name: ki_add_uri add_uri_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_add_uri ALTER COLUMN add_uri_id SET DEFAULT nextval('public.ki_add_uri_add_uri_id_seq'::regclass);
+
+
+--
+-- Name: ki_game_date game_date_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_game_date ALTER COLUMN game_date_id SET DEFAULT nextval('public.ki_game_date_game_date_id_seq'::regclass);
+
+
+--
+-- Name: ki_game_types game_type_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_game_types ALTER COLUMN game_type_id SET DEFAULT nextval('public.ki_game_types_game_type_id_seq'::regclass);
+
+
+--
+-- Name: ki_games id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_games ALTER COLUMN id SET DEFAULT nextval('public.ki_games_id_seq'::regclass);
+
+
+--
+-- Name: ki_photo photo_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_photo ALTER COLUMN photo_id SET DEFAULT nextval('public.ki_photo_photo_id_seq'::regclass);
+
+
+--
+-- Name: ki_polygons polygon_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_polygons ALTER COLUMN polygon_id SET DEFAULT nextval('public.ki_polygons_polygon_id_seq'::regclass);
+
+
+--
+-- Name: ki_regions region_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_regions ALTER COLUMN region_id SET DEFAULT nextval('public.ki_regions_region_id_seq'::regclass);
+
+
+--
+-- Name: ki_review review_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_review ALTER COLUMN review_id SET DEFAULT nextval('public.ki_review_review_id_seq'::regclass);
+
+
+--
+-- Name: ki_sub_regions sub_region_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_sub_regions ALTER COLUMN sub_region_id SET DEFAULT nextval('public.ki_sub_regions_sub_region_id_seq'::regclass);
+
+
+--
+-- Name: ki_update_types ki_update_type_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_update_types ALTER COLUMN ki_update_type_id SET DEFAULT nextval('public.ki_update_types_ki_update_type_id_seq'::regclass);
+
+
+--
+-- Name: ki_updates ki_update_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_updates ALTER COLUMN ki_update_id SET DEFAULT nextval('public.ki_updates_ki_update_id_seq'::regclass);
+
+
+--
+-- Name: news news_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.news ALTER COLUMN news_id SET DEFAULT nextval('public.news_news_id_seq'::regclass);
+
+
+--
+-- Name: old_games old_game_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_games ALTER COLUMN old_game_id SET DEFAULT nextval('public.old_games_old_game_id_seq'::regclass);
+
+
+--
+-- Name: privs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.privs ALTER COLUMN id SET DEFAULT nextval('public.privs_id_seq'::regclass);
+
+
+--
+-- Name: tags id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
+
+
+--
+-- Name: users user_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN user_id SET DEFAULT nextval('public.users_user_id_seq'::regclass);
+
+
+--
+-- Name: ki_add_uri idx_16880_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_add_uri
+    ADD CONSTRAINT idx_16880_primary PRIMARY KEY (add_uri_id);
+
+
+--
+-- Name: ki_games idx_16887_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_games
+    ADD CONSTRAINT idx_16887_primary PRIMARY KEY (id);
+
+
+--
+-- Name: ki_game_date idx_16912_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_game_date
+    ADD CONSTRAINT idx_16912_primary PRIMARY KEY (game_date_id);
+
+
+--
+-- Name: ki_game_types idx_16917_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_game_types
+    ADD CONSTRAINT idx_16917_primary PRIMARY KEY (game_type_id);
+
+
+--
+-- Name: ki_photo idx_16926_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_photo
+    ADD CONSTRAINT idx_16926_primary PRIMARY KEY (photo_id);
+
+
+--
+-- Name: ki_polygons idx_16936_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_polygons
+    ADD CONSTRAINT idx_16936_primary PRIMARY KEY (polygon_id);
+
+
+--
+-- Name: ki_regions idx_16945_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_regions
+    ADD CONSTRAINT idx_16945_primary PRIMARY KEY (region_id);
+
+
+--
+-- Name: ki_review idx_16953_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_review
+    ADD CONSTRAINT idx_16953_primary PRIMARY KEY (review_id);
+
+
+--
+-- Name: ki_status idx_16959_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_status
+    ADD CONSTRAINT idx_16959_primary PRIMARY KEY (status_id);
+
+
+--
+-- Name: ki_sub_regions idx_16967_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_sub_regions
+    ADD CONSTRAINT idx_16967_primary PRIMARY KEY (sub_region_id);
+
+
+--
+-- Name: ki_updates idx_16975_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_updates
+    ADD CONSTRAINT idx_16975_primary PRIMARY KEY (ki_update_id);
+
+
+--
+-- Name: ki_update_types idx_16983_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_update_types
+    ADD CONSTRAINT idx_16983_primary PRIMARY KEY (ki_update_type_id);
+
+
+--
+-- Name: ki_zayavka_allrpg idx_16999_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ki_zayavka_allrpg
+    ADD CONSTRAINT idx_16999_primary PRIMARY KEY (allrpg_zayvka_id);
+
+
+--
+-- Name: news idx_17006_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.news
+    ADD CONSTRAINT idx_17006_primary PRIMARY KEY (news_id);
+
+
+--
+-- Name: news_tags idx_17014_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.news_tags
+    ADD CONSTRAINT idx_17014_primary PRIMARY KEY (nid, tid);
+
+
+--
+-- Name: old_games idx_17020_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.old_games
+    ADD CONSTRAINT idx_17020_primary PRIMARY KEY (old_game_id);
+
+
+--
+-- Name: privs idx_17027_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.privs
+    ADD CONSTRAINT idx_17027_primary PRIMARY KEY (id);
+
+
+--
+-- Name: tags idx_17035_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT idx_17035_primary PRIMARY KEY (id);
+
+
+--
+-- Name: users idx_17042_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT idx_17042_primary PRIMARY KEY (user_id);
+
+
+--
+-- Name: user_privs idx_17049_primary; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_privs
+    ADD CONSTRAINT idx_17049_primary PRIMARY KEY (uid, pid);
+
+
+--
+-- Name: idx_16880_resolved; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16880_resolved ON public.ki_add_uri USING btree (resolved);
+
+
+--
+-- Name: idx_16887_polygon; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16887_polygon ON public.ki_games USING btree (polygon);
+
+
+--
+-- Name: idx_16887_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16887_type ON public.ki_games USING btree (type);
+
+
+--
+-- Name: idx_16912_game_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16912_game_id ON public.ki_game_date USING btree (game_id, "order");
+
+
+--
+-- Name: idx_16917_show_all_regions; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16917_show_all_regions ON public.ki_game_types USING btree (show_all_regions);
+
+
+--
+-- Name: idx_16926_game_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16926_game_id ON public.ki_photo USING btree (game_id);
+
+
+--
+-- Name: idx_16945_region_experimental; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16945_region_experimental ON public.ki_regions USING btree (region_experimental);
+
+
+--
+-- Name: idx_16945_region_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_16945_region_name ON public.ki_regions USING btree (region_name, region_code);
+
+
+--
+-- Name: idx_16953_game_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16953_game_id ON public.ki_review USING btree (game_id);
+
+
+--
+-- Name: idx_16953_game_review; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16953_game_review ON public.ki_review USING btree (game_id, review_id);
+
+
+--
+-- Name: idx_16967_region_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16967_region_id ON public.ki_sub_regions USING btree (region_id);
+
+
+--
+-- Name: idx_16975_game_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16975_game_id ON public.ki_updates USING btree (game_id);
+
+
+--
+-- Name: idx_16975_photo_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16975_photo_id ON public.ki_updates USING btree (photo_id);
+
+
+--
+-- Name: idx_16975_update_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16975_update_date ON public.ki_updates USING btree (update_date, game_id);
+
+
+--
+-- Name: idx_16975_updated_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16975_updated_user_id ON public.ki_updates USING btree (updated_user_id);
+
+
+--
+-- Name: idx_16994_sub_region_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_16994_sub_region_id ON public.ki_years_cache USING btree (region_id);
+
+
+--
+-- Name: idx_16994_year; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_16994_year ON public.ki_years_cache USING btree (year, region_id);
+
+
+--
+-- Name: idx_17006_news_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_17006_news_date ON public.news USING btree (news_date);
+
+
+--
+-- Name: idx_17006_news_text; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_17006_news_text ON public.news USING gin (to_tsvector('simple'::regconfig, news_text));
+
+
+--
+-- Name: idx_17035_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_17035_name ON public.tags USING btree (tag_name);
+
+
+--
+-- Name: idx_17035_uri; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_17035_uri ON public.tags USING btree (uri);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict YKQmch2d1TBx8do79bLQPwafEzlqXwjdriU98MMicVCSdM7cRIfJD306zDCENbT
+

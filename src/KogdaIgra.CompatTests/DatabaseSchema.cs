@@ -1,81 +1,104 @@
-using Npgsql;
+using DotNet.Testcontainers.Containers;
 
 namespace KogdaIgra.CompatTests;
 
 /// <summary>
-/// Накатывает схему kogda-igra на пустую БД: сначала db/schema/schema.sql,
-/// затем db/migrations/*.sql в алфавитном порядке — ровно так же, как это
-/// происходит на живой базе PHP-версии.
+/// Накатывает схему kogda-igra на пустую БД.
+/// Скрипты — это вывод <c>pg_dump</c> с живой dev-базы, снятый
+/// <c>utils/fetch-dev-db.ps1</c> (см. db/README.md).
 /// </summary>
 public static class DatabaseSchema
 {
-    public static async Task ApplyAsync(string connectionString, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Применяет схему и справочники.
+    /// Выполняется <c>psql</c> внутри контейнера, а не через Npgsql: вывод <c>pg_dump</c> —
+    /// это скрипт для psql, а не чистый SQL. В нём есть мета-команды (<c>\restrict</c>,
+    /// <c>\unrestrict</c>) и блоки <c>COPY ... FROM stdin</c>, которые обычное соединение
+    /// выполнить не может.
+    /// </summary>
+    public static async Task ApplyAsync(
+        IContainer database,
+        string user,
+        string databaseName,
+        CancellationToken cancellationToken = default)
     {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(cancellationToken);
-
         foreach (var script in EnumerateScripts())
         {
-            var sql = await File.ReadAllTextAsync(script.FullName, cancellationToken);
-            await using var command = new NpgsqlCommand(sql, connection);
-            try
+            // CopyAsync принимает каталог назначения, имя файла берётся из источника.
+            const string directoryInContainer = "/tmp";
+            var pathInContainer = $"{directoryInContainer}/{script.Name}";
+            await database.CopyAsync(script, directoryInContainer, ct: cancellationToken);
+
+            var result = await database.ExecAsync(
+                [
+                    "psql",
+                    "--username", user,
+                    "--dbname", databaseName,
+                    // Без этого psql проглотит ошибку и молча оставит схему недоделанной.
+                    "--set", "ON_ERROR_STOP=1",
+                    "--file", pathInContainer,
+                ],
+                cancellationToken);
+
+            if (result.ExitCode != 0)
             {
-                _ = await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-            catch (PostgresException e)
-            {
-                throw new InvalidOperationException($"Не применился {script.Name}: {e.MessageText}", e);
+                throw new InvalidOperationException(
+                    $"Не применился {script.Name} (код {result.ExitCode}): {result.Stderr}");
             }
         }
     }
 
     /// <summary>
-    /// Возвращает БД в исходное засеянное состояние: для write-тестов, которым нужна
-    /// чистая база перед каждой проверкой (ADR 0001).
+    /// Возвращает БД в исходное состояние: для write-тестов, которым нужна чистая база
+    /// перед каждой проверкой (ADR 0001).
     /// </summary>
-    public static async Task ResetAsync(string connectionString, CancellationToken cancellationToken = default)
+    public static async Task ResetAsync(
+        IContainer database,
+        string user,
+        string databaseName,
+        CancellationToken cancellationToken = default)
     {
-        await using (var connection = new NpgsqlConnection(connectionString))
+        var result = await database.ExecAsync(
+            [
+                "psql",
+                "--username", user,
+                "--dbname", databaseName,
+                "--set", "ON_ERROR_STOP=1",
+                "--command", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
+            ],
+            cancellationToken);
+
+        if (result.ExitCode != 0)
         {
-            await connection.OpenAsync(cancellationToken);
-            await using var drop = new NpgsqlCommand("DROP SCHEMA public CASCADE; CREATE SCHEMA public;", connection);
-            _ = await drop.ExecuteNonQueryAsync(cancellationToken);
+            throw new InvalidOperationException($"Не удалось очистить схему: {result.Stderr}");
         }
 
-        await ApplyAsync(connectionString, cancellationToken);
+        await ApplyAsync(database, user, databaseName, cancellationToken);
     }
 
     private static IEnumerable<FileInfo> EnumerateScripts()
     {
-        var schema = new FileInfo(Path.Combine(RepositoryLayout.Database.FullName, "schema", "schema.sql"));
+        var schemaDirectory = new DirectoryInfo(Path.Combine(RepositoryLayout.Database.FullName, "schema"));
+
+        var schema = new FileInfo(Path.Combine(schemaDirectory.FullName, "schema.sql"));
         if (!schema.Exists)
         {
             throw new FileNotFoundException(
-                "Нет db/schema/schema.sql — схема БД не заведена, см. db/README.md.", schema.FullName);
+                "Нет db/schema/schema.sql — схема БД не снята, см. db/README.md.", schema.FullName);
         }
 
         yield return schema;
 
-        // Справочники (регионы, типы игр, статусы) лежат отдельно, когда схема снята с живой
-        // базы: pg_dump --schema-only данных не содержит, а без справочников сайт не отрисуется.
-        var referenceData = new FileInfo(
-            Path.Combine(RepositoryLayout.Database.FullName, "schema", "reference-data.sql"));
-        if (referenceData.Exists)
+        // Справочники (регионы, типы игр, статусы) лежат отдельно: pg_dump --schema-only
+        // данных не содержит, а без справочников сайт не отрисует ни одной страницы.
+        var referenceData = new FileInfo(Path.Combine(schemaDirectory.FullName, "reference-data.sql"));
+        if (!referenceData.Exists)
         {
-            yield return referenceData;
+            throw new FileNotFoundException(
+                "Нет db/schema/reference-data.sql — справочники не сняты, см. db/README.md.",
+                referenceData.FullName);
         }
 
-        // Каталог миграций существует, только пока схема собрана из исторических дампов.
-        // Снимок живой базы уже содержит их все — тогда каталога просто нет, см. db/README.md.
-        var migrations = new DirectoryInfo(Path.Combine(RepositoryLayout.Database.FullName, "migrations"));
-        if (!migrations.Exists)
-        {
-            yield break;
-        }
-
-        foreach (var migration in migrations.GetFiles("*.sql").OrderBy(f => f.Name, StringComparer.Ordinal))
-        {
-            yield return migration;
-        }
+        yield return referenceData;
     }
 }

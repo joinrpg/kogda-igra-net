@@ -1,84 +1,66 @@
-# База данных
+# Схема БД
 
-Здесь лежит схема БД kogda-igra.ru в том виде, в котором её накатывают тесты на чистый Postgres.
+## Откуда берётся
 
-- `schema/schema.sql` — полная схема (21 таблица) плюс засеянные справочники.
-- `migrations/*.sql` — миграции, скопированные из PHP-репозитория **дословно**.
+`db/schema/*.sql` — снимок **живой dev-базы** PHP-версии, снятый `utils/fetch-dev-db.ps1`.
+Dev и prod — две базы на одном сервере PostgreSQL 15.18 в Yandex Cloud, поэтому снимок с dev
+отражает и структуру прода.
 
-Порядок применения: сначала `schema/schema.sql`, затем `migrations/*.sql` в алфавитном порядке —
-ровно так же, как это происходит на живой базе PHP-версии. Реализация —
-`src/KogdaIgra.CompatTests/DatabaseSchema.cs`.
+| Файл | Что внутри | Чем снят |
+|---|---|---|
+| `schema/schema.sql` | Структура: 21 таблица, индексы, последовательности | `pg_dump --schema-only` |
+| `schema/reference-data.sql` | Справочники: регионы, субрегионы, типы игр, статусы, типы обновлений, привилегии | `pg_dump --data-only --table=...` |
+| `local/snapshot.sql` | Полный дамп с данными | `pg_dump`, только с `-WithData` |
 
-## Откуда это взялось
+`db/local/` **заигнорен и не коммитится**: в `users` и `ki_games` лежат адреса электронной
+почты, причём у игр есть флаг `hide_email`. Эти данные не должны попадать в репозиторий.
 
-`schema/schema.sql` **сконвертирован вручную** из legacy-дампов phpMyAdmin в MySQL-диалекте,
-лежащих в PHP-репозитории: `..\kogda-igra\mysql-db-structure\*.sql`. Прод PHP-версии давно на
-Postgres, но исторические дампы структуры остались в MySQL-формате.
+## Почему снимок, а не миграции
 
-Оригинальные дампы **остаются в PHP-репозитории как архив** и сюда не копируются. Их не трогать.
+Раньше здесь лежала схема, переведённая вручную из MySQL-дампов 2012 года
+(`mysql-db-structure/*.sql` в PHP-репозитории), плюс каталог `db/migrations/` с
+инкрементальными миграциями. От этого отказались: снимок живой базы всегда точен, а дампы
+2012 года требовали ручной конвертации диалекта и отставали на все миграции.
 
-`migrations/` — копия `..\kogda-igra\db-migrations\`, файл в файл, без правок.
+Каталога `db/migrations/` больше нет **намеренно**. Снимок уже содержит все применённые
+миграции, и повторное их применение упало бы с `column already exists`.
 
-Таблицы: `ki_regions`, `ki_sub_regions`, `ki_game_types`, `ki_status`, `ki_update_types`, `users`,
-`privs`, `user_privs`, `ki_polygons`, `ki_games`, `ki_game_date`, `ki_photo`, `ki_review`,
-`ki_updates`, `ki_add_uri`, `ki_zayavka_allrpg`, `ki_years_cache`, `old_games`, `tags`, `news`,
-`news_tags`.
+## Как обновить после изменений в PHP-версии
 
-Засеянные справочные данные: регионы, суб-регионы, типы игр, статусы, типы обновлений (`ki_update_types`),
-привилегии (`privs`). Compat-тесты на них опираются — например, `SmokeTests` проверяет, что на
-главной видна «Москва».
+Когда в PHP-репозитории появилась миграция и её накатили на dev — переснять снимок:
 
-## Решения при конвертации MySQL → PostgreSQL
-
-Имена таблиц и колонок сохранены **дословно** — приложение от них зависит. Кроме этого:
-
-- **Нулевые даты.** MySQL-дефолт `'0000-00-00'` / `'0000-00-00 00:00:00'` не имеет эквивалента в
-  PostgreSQL, поэтому такие DEFAULT просто убраны (места помечены комментарием в `schema.sql`).
-  Это отличие поведения, о нём надо помнить при портировании кода, который эти значения читает.
-- **Зарезервированные слова.** `order`, `begin`, `time`, `comment`, `year`, `desc` — идентификаторы
-  в двойных кавычках (`"order"`), что сохраняет имя ровно таким, каким оно было в MySQL.
-- **FULLTEXT.** MySQL-индекс `FULLTEXT KEY news_text` прямого аналога не имеет; заменён на GIN-индекс
-  по `to_tsvector` с явной конфигурацией `'simple'` — явная конфигурация нужна, чтобы выражение было
-  immutable и годилось для индекса:
-  ```sql
-  CREATE INDEX idx_news_text_fts ON news USING gin (to_tsvector('simple', news_text));
-  ```
-- **Последовательности.** Справочные строки вставляются с явными id, поэтому в конце файла
-  последовательности сдвигаются `setval(pg_get_serial_sequence(...), max(...))` — иначе первый же
-  INSERT приложения словил бы конфликт по первичному ключу.
-
-## Как добавить миграцию
-
-Когда в PHP-репозитории появился новый файл в `db-migrations/`:
-
-1. Скопировать его **как есть** в `db/migrations/`. Не переписывать, не переименовывать, не
-   «улучшать»: расхождение между репозиториями — источник неуловимых различий в поведении.
-2. Убедиться, что алфавитный порядок имён даёт правильный порядок применения.
-3. Прогнать compat-тесты — они накатывают схему с нуля и упадут с именем файла в сообщении, если
-   миграция не применилась.
-
-В `schema/schema.sql` изменения из миграции **не вносить**: схема — это исходная точка, миграции
-накатываются поверх, как на живой базе.
-
-## Как проверить, что схема накатывается
-
-Быстрая проверка без тестов:
-
-```bash
-docker run --rm -d --name kogda-schema-check \
-  -e POSTGRES_DB=kogdaigra -e POSTGRES_USER=kogdauser -e POSTGRES_PASSWORD=kogdapass \
-  -p 7433:5432 postgres:14.2
-
-PGPASSWORD=kogdapass psql -h localhost -p 7433 -U kogdauser -d kogdaigra \
-  -v ON_ERROR_STOP=1 -f db/schema/schema.sql
-
-PGPASSWORD=kogdapass psql -h localhost -p 7433 -U kogdauser -d kogdaigra \
-  -v ON_ERROR_STOP=1 -f db/migrations/add_telegram_fields.sql
-
-docker rm -f kogda-schema-check
+```powershell
+$env:KOGDA_DEV_PASSWORD = '<пароль kogda-dev>'
+./utils/fetch-dev-db.ps1
 ```
 
-`-v ON_ERROR_STOP=1` обязателен: без него `psql` проглотит ошибку и завершится с кодом 0.
+Отдельно копировать `db-migrations/*.sql` из PHP-репозитория не нужно.
 
-Версия `postgres:14.2` — та же, что на проде PHP-версии и в `PhpSiteUnderTest`; проверять на другой
-версии смысла мало.
+Версия `pg_dump` не может быть ниже версии сервера. Если сервер подняли — передать нужную:
+
+```powershell
+./utils/fetch-dev-db.ps1 -PostgresImage postgres:16
+```
+
+## Как применяется в тестах
+
+`DatabaseSchema` копирует оба файла в контейнер и выполняет их через `psql`, а не через
+Npgsql. Это принципиально: вывод `pg_dump` — скрипт для `psql`, а не чистый SQL. В нём есть
+мета-команды (`\restrict`, `\unrestrict`) и блоки `COPY ... FROM stdin` с терминатором `\.`,
+которые обычное соединение выполнить не может.
+
+Порядок применения: `schema.sql`, затем `reference-data.sql`.
+
+## Как проверить вручную
+
+```bash
+docker run -d --name kicheck -e POSTGRES_PASSWORD=pass -e POSTGRES_DB=kogdaigra postgres:15.18
+docker cp db/schema/schema.sql kicheck:/schema.sql
+docker cp db/schema/reference-data.sql kicheck:/reference.sql
+docker exec kicheck psql -U postgres -d kogdaigra -v ON_ERROR_STOP=1 -f /schema.sql
+docker exec kicheck psql -U postgres -d kogdaigra -v ON_ERROR_STOP=1 -f /reference.sql
+docker exec kicheck psql -U postgres -d kogdaigra -c "\dt"
+docker rm -f kicheck
+```
+
+Проще — `dotnet test`: харнесс делает ровно это.

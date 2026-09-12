@@ -25,11 +25,17 @@ db/local/ заигнорен и его нельзя добавлять в реп
     ./utils/fetch-dev-db.ps1
 
 pg_dump запускается в контейнере, локальная установка Postgres не нужна.
+
+Если pg_dump ругается на server version mismatch — передать -PostgresImage с нужной версией.
 #>
 
 [CmdletBinding()]
 param(
-    [switch]$WithData
+    [switch]$WithData,
+
+    # Версия pg_dump не может быть ниже версии сервера. Dev/prod живут в Yandex Cloud
+    # на PostgreSQL 15.18; если сервер поднимут — поднять и это значение.
+    [string]$PostgresImage = 'postgres:15.18'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -60,8 +66,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $schemaDir = Join-Path $repoRoot 'db/schema'
 $localDir = Join-Path $repoRoot 'db/local'
 
-# Версия образа должна быть не ниже версии сервера, иначе pg_dump откажется работать.
-$image = 'postgres:14.2'
+$image = $PostgresImage
 
 function Invoke-PgDump([string[]]$DumpArguments, [string]$OutputPath)
 {
