@@ -87,6 +87,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
 
         await database.StartAsync();
         await DatabaseSchema.ApplyAsync(database, DatabaseUser, DatabaseName);
+        await TestData.SeedAsync(database, DatabaseUser, DatabaseName);
 
         // Порт выбираем сами: PHP-приложению нужно знать свой публичный адрес (SITENAME_HOST)
         // ещё до старта, поэтому случайный порт от Testcontainers тут не подходит.
@@ -147,6 +148,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         }
 
         await DatabaseSchema.ResetAsync(database, DatabaseUser, DatabaseName, cancellationToken);
+        await TestData.SeedAsync(database, DatabaseUser, DatabaseName, cancellationToken);
     }
 
     private static int FindFreePort()
