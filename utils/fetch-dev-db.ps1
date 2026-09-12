@@ -72,15 +72,32 @@ function Invoke-PgDump([string[]]$DumpArguments, [string]$OutputPath)
 {
     $connection = "postgresql://${user}@${dbHost}:${port}/${database}?sslmode=require"
 
+    $outputDirectory = Split-Path -Parent $OutputPath
+    $outputName = Split-Path -Leaf $OutputPath
+    New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
+
+    # pg_dump пишет прямо в примонтированный каталог, а не в stdout. Через конвейер
+    # PowerShell вывод пропускать нельзя: он декодирует его кодировкой консоли
+    # ([Console]::OutputEncoding), и на не-UTF-8 консоли кириллица превращается
+    # в псевдографику (UTF-8, прочитанный как CP866).
     docker run --rm `
         -e "PGPASSWORD=$password" `
+        -v "${outputDirectory}:/out" `
         $image `
-        pg_dump $connection --no-owner --no-privileges $DumpArguments |
-        Set-Content -Path $OutputPath -Encoding utf8
+        pg_dump $connection --no-owner --no-privileges --encoding=UTF8 `
+        --file "/out/$outputName" $DumpArguments
 
     if ($LASTEXITCODE -ne 0)
     {
         throw "pg_dump завершился с кодом $LASTEXITCODE"
+    }
+
+    # Страховка: убеждаемся, что в файле не мусор. Псевдографика в русском тексте —
+    # верный признак, что кодировка всё-таки поехала.
+    $content = [System.IO.File]::ReadAllText($OutputPath, [System.Text.Encoding]::UTF8)
+    if ($content.Contains([char]0x2568) -or $content.Contains([char]0x2564))
+    {
+        throw "В $outputName попала испорченная кодировка (псевдографика вместо кириллицы)."
     }
 
     Write-Host "Записан $OutputPath"
