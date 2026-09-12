@@ -38,7 +38,7 @@ dotnet format --verify-no-changes --severity warn   # Проверка, ровн
 dotnet test                                         # Все тесты
 ```
 
-Прогон тестов требует поднятого Docker и переменной `KOGDA_IGRA_IMAGE` (см. ниже).
+Прогон тестов требует только поднятого Docker: образ PHP-версии публичный (см. ниже).
 
 ## Тесты
 
@@ -62,11 +62,10 @@ dotnet test                                         # Все тесты
 - **Готча, проверено экспериментально**: PHP-приложение отдаёт **HTTP 200 даже при сломанной БД** —
   в теле тогда лежит сырой текст ошибки Postgres. Ассерт, опирающийся только на статус-код, ничего
   не проверяет. Использовать `SiteResponse.ContainsDatabaseError` / `SiteResponse.LooksLikeHtmlPage`.
-- Образ PHP-версии `ghcr.io/leotsarev/kogda-igra:latest` недоступен: `docker pull` отвечает
-  `not found` (образ приватный, а тег `latest` CI PHP-репозитория ставит только релизам — какая из
-  двух причин сработала, снаружи не различить).
-  Локально образ собирается из соседнего репозитория и передаётся через `KOGDA_IGRA_IMAGE` —
-  пошагово в [docs/compat-tests.md](docs/compat-tests.md).
+- Образ PHP-версии — `ghcr.io/joinrpg/kogda-igra:latest`. Пакет **публичный**, тянется анонимно,
+  ничего настраивать не надо. Подменить образ (например, на локально собранный из соседнего
+  чекаута) можно переменной `KOGDA_IGRA_IMAGE` — см. [docs/compat-tests.md](docs/compat-tests.md).
+  Внимание: владелец образа — организация `joinrpg`, а не `leotsarev`.
 
 ## Коммиты
 

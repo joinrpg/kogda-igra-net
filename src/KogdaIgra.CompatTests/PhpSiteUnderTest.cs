@@ -15,16 +15,16 @@ namespace KogdaIgra.CompatTests;
 public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsyncDisposable
 {
     /// <summary>Образ, который публикует CI PHP-репозитория.</summary>
-    public const string DefaultImageName = "ghcr.io/leotsarev/kogda-igra:latest";
+    public const string DefaultImageName = "ghcr.io/joinrpg/kogda-igra:latest";
 
     /// <summary>Переменная окружения для подмены образа.</summary>
     public const string ImageEnvironmentVariable = "KOGDA_IGRA_IMAGE";
 
     /// <summary>
-    /// Образ PHP-версии. По умолчанию — опубликованный в ghcr.io, но он приватный и тег
-    /// latest ставится только релизам. Локально образ можно собрать из соседнего чекаута
-    /// PHP-репозитория (<c>docker compose build</c>) и указать его через
-    /// <see cref="ImageEnvironmentVariable"/> — см. docs/compat-tests.md.
+    /// Образ PHP-версии. По умолчанию — опубликованный в ghcr.io: пакет публичный,
+    /// анонимный pull работает. Подменить (например, на локально собранный из соседнего
+    /// чекаута PHP-репозитория) можно через <see cref="ImageEnvironmentVariable"/> —
+    /// см. docs/compat-tests.md.
     /// </summary>
     public static string ImageName =>
         Environment.GetEnvironmentVariable(ImageEnvironmentVariable) is { Length: > 0 } custom

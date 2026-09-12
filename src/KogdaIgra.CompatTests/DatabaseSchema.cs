@@ -56,6 +56,17 @@ public static class DatabaseSchema
 
         yield return schema;
 
+        // Справочники (регионы, типы игр, статусы) лежат отдельно, когда схема снята с живой
+        // базы: pg_dump --schema-only данных не содержит, а без справочников сайт не отрисуется.
+        var referenceData = new FileInfo(
+            Path.Combine(RepositoryLayout.Database.FullName, "schema", "reference-data.sql"));
+        if (referenceData.Exists)
+        {
+            yield return referenceData;
+        }
+
+        // Каталог миграций существует, только пока схема собрана из исторических дампов.
+        // Снимок живой базы уже содержит их все — тогда каталога просто нет, см. db/README.md.
         var migrations = new DirectoryInfo(Path.Combine(RepositoryLayout.Database.FullName, "migrations"));
         if (!migrations.Exists)
         {
