@@ -37,6 +37,12 @@ public static class TestData
     /// </summary>
     public const string CommentOnlyPhrase = "примечаниепроболото";
 
+    /// <summary>
+    /// <c>allrpg_info_id</c> активной игры: заявку на уже известную игру
+    /// <c>add_uri</c> отбрасывает.
+    /// </summary>
+    public const int KnownAllrpgId = 12345;
+
     /// <summary>Название игры из другого региона.</summary>
     public const string SaintPetersburgGameName = "Петербургская тестовая игра";
 

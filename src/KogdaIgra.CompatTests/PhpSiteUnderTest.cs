@@ -144,6 +144,13 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             $"Сайт поднялся, но не отдаёт страницу. Последний ответ: {SiteResponse.Excerpt(lastBody)}");
     }
 
+    /// <summary>
+    /// Строка подключения к БД сайта — для ассертов по состоянию таблиц.
+    /// Write-тесты обязаны проверять и ответ, и то, что реально легло в базу (ADR 0001).
+    /// </summary>
+    public string ConnectionString => database?.GetConnectionString()
+        ?? throw new InvalidOperationException($"БД не поднята: {StartupFailure}");
+
     public async Task ResetDatabaseAsync(CancellationToken cancellationToken = default)
     {
         if (database is null)
