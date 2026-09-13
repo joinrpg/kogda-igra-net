@@ -37,6 +37,12 @@ public static class TestData
     /// </summary>
     public const string CommentOnlyPhrase = "примечаниепроболото";
 
+    /// <summary>Идентификатор засеянного пользователя с правом EDIT_GAMES.</summary>
+    public const int ModeratorUserId = 9900;
+
+    /// <summary>Имя засеянного модератора — оно выводится в меню после входа.</summary>
+    public const string ModeratorUserName = "testmoderator";
+
     /// <summary>
     /// <c>allrpg_info_id</c> активной игры: заявку на уже известную игру
     /// <c>add_uri</c> отбрасывает.

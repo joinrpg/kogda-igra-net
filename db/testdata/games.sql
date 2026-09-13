@@ -82,3 +82,14 @@ FROM ki_games kg
 INNER JOIN ki_game_date kgd ON kgd.game_id = kg.id
 INNER JOIN ki_sub_regions ksr ON ksr.sub_region_id = kg.sub_region_id
 WHERE kg.deleted_flag = 0;
+
+-- Пользователь-модератор для тестов раздела /edit/.
+-- Вход в PHP-версии идёт через OAuth JoinRPG, который в тестах намеренно заглушён
+-- отсутствием ключей. Но сама авторизация опирается только на $_SESSION['user_id']
+-- (appcode/user_funcs.php), а права — на таблицы privs/user_privs. Поэтому харнесс
+-- подкладывает готовую сессию, а не проходит OAuth: PHP-код при этом не меняется.
+INSERT INTO users (user_id, username, email, lastvisit, create_date, editor_flag)
+VALUES (9900, 'testmoderator', 'moderator@example.com', NOW(), CURRENT_DATE, 1);
+
+-- pid = 4 — это EDIT_GAMES, «Редактор календаря» (справочник privs).
+INSERT INTO user_privs (uid, pid) VALUES (9900, 4);

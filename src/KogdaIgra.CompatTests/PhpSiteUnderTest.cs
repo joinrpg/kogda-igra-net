@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using Testcontainers.PostgreSql;
@@ -150,6 +151,47 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     /// </summary>
     public string ConnectionString => database?.GetConnectionString()
         ?? throw new InvalidOperationException($"БД не поднята: {StartupFailure}");
+
+    /// <summary>
+    /// Клиент, входящий на сайт как засеянный пользователь.
+    /// <para>
+    /// Вход в PHP-версии идёт только через OAuth JoinRPG, а он в тестах заглушён
+    /// отсутствием ключей. Но авторизация опирается лишь на <c>$_SESSION['user_id']</c>
+    /// (<c>appcode/user_funcs.php</c>), а сессии PHP в этом образе хранит файлами
+    /// в <c>/tmp</c>. Поэтому харнесс кладёт готовый файл сессии в контейнер и
+    /// присылает соответствующую cookie — PHP-код при этом не меняется и не
+    /// подменяется, что и требует ADR 0001.
+    /// </para>
+    /// </summary>
+    public async Task<HttpClient> CreateLoggedInClientAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (site is null)
+        {
+            throw new InvalidOperationException($"Сайт не поднят: {StartupFailure}");
+        }
+
+        // Идентификатор сессии произвольный: PHP берёт его из cookie как есть.
+        var sessionId = $"compattest{userId:D6}";
+
+        // Формат сериализации сессий PHP по умолчанию: <ключ>|<значение в serialize()>.
+        var payload = $"user_id|i:{userId};";
+
+        await site.CopyAsync(
+            System.Text.Encoding.UTF8.GetBytes(payload),
+            $"/tmp/sess_{sessionId}",
+            // Файл создаётся от root, а Apache работает под www-data — без права
+            // на запись PHP не сможет обновить сессию и молча начнёт новую.
+            fileMode: UnixFileModes.UserRead | UnixFileModes.UserWrite
+                | UnixFileModes.GroupRead | UnixFileModes.GroupWrite
+                | UnixFileModes.OtherRead | UnixFileModes.OtherWrite,
+            ct: cancellationToken);
+
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add("Cookie", $"PHPSESSID={sessionId}");
+        return client;
+    }
 
     public async Task ResetDatabaseAsync(CancellationToken cancellationToken = default)
     {
