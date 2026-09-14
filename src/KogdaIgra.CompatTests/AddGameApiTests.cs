@@ -14,7 +14,12 @@ namespace KogdaIgra.CompatTests;
 [ClassDataSource<PhpSiteUnderTest>(Shared = SharedType.PerTestSession)]
 public class AddGameApiTests(PhpSiteUnderTest site)
 {
+    // База восстанавливается и до, и после теста. «До» — чтобы тест не зависел от
+    // соседей; «после» — чтобы соседи не зависели от него. Без второго последний
+    // write-тест оставлял бы за собой переименованную или удалённую игру, и падали
+    // бы уже read-тесты, идущие следом (прогон последовательный).
     [Before(HookType.Test)]
+    [After(HookType.Test)]
     public async Task ResetDatabase()
     {
         if (site.StartupFailure is null)

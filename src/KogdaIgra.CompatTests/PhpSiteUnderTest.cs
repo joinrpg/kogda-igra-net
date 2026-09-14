@@ -165,6 +165,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     /// </summary>
     public async Task<HttpClient> CreateLoggedInClientAsync(
         int userId,
+        bool followRedirects = true,
         CancellationToken cancellationToken = default)
     {
         if (site is null)
@@ -188,7 +189,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
                 | UnixFileModes.OtherRead | UnixFileModes.OtherWrite,
             ct: cancellationToken);
 
-        var client = CreateClient();
+        var client = CreateClient(followRedirects);
         client.DefaultRequestHeaders.Add("Cookie", $"PHPSESSID={sessionId}");
         return client;
     }
