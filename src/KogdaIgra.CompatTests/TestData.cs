@@ -26,6 +26,15 @@ public static class TestData
 
         /// <summary>Игра в субрегионе Санкт-Петербург (регион 2) — остальные в регионе 3.</summary>
         public const int InSaintPetersburg = 905;
+
+        /// <summary>Игра с пустым <c>email</c> — попадает в очередь «Нет e-mail».</summary>
+        public const int WithoutEmail = 906;
+
+        /// <summary>
+        /// Игра со статусом «???» (<c>problem_status = 1</c>) на полигоне-заглушке
+        /// (<c>meta_polygon = 1</c>) — попадает сразу в две очереди.
+        /// </summary>
+        public const int WithUnclearStatus = 907;
     }
 
     /// <summary>Название активной игры — ожидаемое значение для ассертов.</summary>
@@ -36,6 +45,12 @@ public static class TestData
     /// Поиск по нему ничего не находит — <c>comment</c> в поиск не входит.
     /// </summary>
     public const string CommentOnlyPhrase = "примечаниепроболото";
+
+    /// <summary>
+    /// Адрес, с которого сделана засеянная анонимная правка. Из документационного
+    /// диапазона RFC 5737 — настоящим он быть не может.
+    /// </summary>
+    public const string AnonymousUpdateIp = "203.0.113.7";
 
     /// <summary>Идентификатор засеянного пользователя с правом EDIT_GAMES.</summary>
     public const int ModeratorUserId = 9900;
@@ -51,6 +66,18 @@ public static class TestData
 
     /// <summary>Название игры из другого региона.</summary>
     public const string SaintPetersburgGameName = "Петербургская тестовая игра";
+
+    /// <summary>Название игры с пустым адресом почты.</summary>
+    public const string WithoutEmailGameName = "Игра без почты";
+
+    /// <summary>Название игры со статусом «???».</summary>
+    public const string UnclearStatusGameName = "Игра с неясным статусом";
+
+    /// <summary>Игра со статусом «OK», чья дата заведомо в прошлом (предыдущий год).</summary>
+    public const string PastGameName = "Игра, которая заведомо прошла";
+
+    /// <summary>Игра со статусом «OK», чья дата заведомо в будущем (следующий год).</summary>
+    public const string FutureGameName = "Игра, которая заведомо впереди";
 
     /// <summary>
     /// Год, в котором PHP-приложение показывает календарь по умолчанию.
