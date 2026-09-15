@@ -22,6 +22,12 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     public const string ImageEnvironmentVariable = "KOGDA_IGRA_IMAGE";
 
     /// <summary>
+    /// Переменная окружения с каталогом, куда складывать сырые данные покрытия PHP.
+    /// Имеет смысл только вместе с образом, собранным из <c>coverage/Dockerfile</c>.
+    /// </summary>
+    public const string CoverageEnvironmentVariable = "COMPAT_COVERAGE_DIR";
+
+    /// <summary>
     /// Образ PHP-версии. По умолчанию — опубликованный в ghcr.io: пакет публичный,
     /// анонимный pull работает. Подменить (например, на локально собранный из соседнего
     /// чекаута PHP-репозитория) можно через <see cref="ImageEnvironmentVariable"/> —
@@ -98,7 +104,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         // ещё до старта, поэтому случайный порт от Testcontainers тут не подходит.
         var hostPort = FindFreePort();
 
-        site = new ContainerBuilder(ImageName)
+        var builder = new ContainerBuilder(ImageName)
             .WithNetwork(network)
             .WithPortBinding(hostPort, 8080)
             .WithEnvironment("POSTGRES_SERVER", DatabaseNetworkAlias)
@@ -110,8 +116,19 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             .WithEnvironment("SITENAME_SCHEME", "http")
             // MAILGUN_KEY и JOINRPG_CLIENT_ID/SECRET намеренно не заданы: без них PHP-код
             // сам становится no-op на внешних интеграциях (требование ADR 0001).
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080))
-            .Build();
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080));
+
+        // Замер покрытия PHP: каталог с хоста подключается внутрь, и образ с Xdebug
+        // складывает туда по файлу на запрос. Включается только переменной окружения,
+        // на обычный прогон не влияет — см. coverage/README.md.
+        var coverageDirectory = Environment.GetEnvironmentVariable(CoverageEnvironmentVariable);
+        if (!string.IsNullOrWhiteSpace(coverageDirectory))
+        {
+            _ = Directory.CreateDirectory(coverageDirectory);
+            builder = builder.WithBindMount(Path.GetFullPath(coverageDirectory), "/coverage-data");
+        }
+
+        site = builder.Build();
 
         await site.StartAsync();
 

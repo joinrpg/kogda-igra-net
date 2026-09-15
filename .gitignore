@@ -141,3 +141,7 @@ UpgradeLog*.htm
 
 # Локальные снимки БД с реальными данными — персональные данные, не коммитить
 db/local/
+
+# Сырые данные и отчёт покрытия PHP
+coverage/lcov.info
+artifacts/coverage-data/
