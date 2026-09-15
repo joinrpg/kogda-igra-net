@@ -30,6 +30,9 @@ public static class TestData
         /// <summary>Игра с пустым <c>email</c> — попадает в очередь «Нет e-mail».</summary>
         public const int WithoutEmail = 906;
 
+        /// <summary>Игра с отзывами: два видимых и один скрытый.</summary>
+        public const int WithReviews = 913;
+
         /// <summary>
         /// Игра со статусом «???» (<c>problem_status = 1</c>) на полигоне-заглушке
         /// (<c>meta_polygon = 1</c>) — попадает сразу в две очереди.
@@ -96,6 +99,18 @@ public static class TestData
 
     /// <summary>Название игры из другого региона.</summary>
     public const string SaintPetersburgGameName = "Петербургская тестовая игра";
+
+    /// <summary>Название игры с отзывами.</summary>
+    public const string WithReviewsGameName = "Игра с отзывами";
+
+    /// <summary>Автор видимого отзыва.</summary>
+    public const string VisibleReviewAuthor = "Автор Видимого";
+
+    /// <summary>Автор скрытого отзыва (<c>show_review_flag = 0</c>).</summary>
+    public const string HiddenReviewAuthor = "Автор Скрытого";
+
+    /// <summary>Номер темы на forum.rpg.ru у третьего отзыва.</summary>
+    public const int ForumTopicId = 777;
 
     /// <summary>Название игры с пустым адресом почты.</summary>
     public const string WithoutEmailGameName = "Игра без почты";

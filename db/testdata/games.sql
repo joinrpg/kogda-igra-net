@@ -207,3 +207,32 @@ INSERT INTO user_privs (uid, pid) VALUES (9903, 5);
 -- (кнопка удаления рисуется, когда COUNT(kg.id) = 0).
 INSERT INTO ki_polygons (polygon_id, polygon_name, sub_region_id, meta_polygon, deleted_flag)
 VALUES (903, 'Пустующий полигон', 3, 0, 0);
+
+-- Игра с отзывами. Заведена отдельно, чтобы не менять выдачу для остальных тестов:
+-- _get_games подмешивает столбцы ki_review через SELECT krev.*, и у игры с отзывом
+-- часть полей приезжает из отзыва, а не из игры.
+--
+-- review_count — денормализованный счётчик: именно по нему отбирается раздел
+-- /reviews/, а не по наличию строк в ki_review.
+INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,
+                      comment, sub_region_id, deleted_flag, hide_email, players_count,
+                      review_count, photo_count, vk_likes, allrpg_info_id)
+VALUES (913, 'Игра с отзывами', '', 1, 900, 'МГ Отзывчивая', 'reviews@example.com',
+        0, 0, '', 3, 0, 0, 60, 2, 0, 0, 20008);
+
+INSERT INTO ki_game_date (game_date_id, game_id, "begin", "time", hidden_flag, "order")
+VALUES (9014, 913, make_date(:year, 3, 15), 2, 0, 0);
+
+INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
+VALUES (9113, 913, make_date(:year, 1, 10), 1, 0);
+
+-- Отзывы. show_review_flag = 1 — виден всем; 0 — скрыт, его показывают только
+-- в форме редактирования игры.
+--
+-- Ссылка собирается по-разному: если topic_id > 0, это тема на forum.rpg.ru,
+-- и review_uri игнорируется; иначе берётся review_uri как есть (review.php).
+INSERT INTO ki_review (review_id, game_id, author_name, topic_id, review_uri,
+                       show_review_flag, author_id)
+VALUES (9501, 913, 'Автор Видимого', 0, 'https://example.com/отзыв', 1, 0),
+       (9502, 913, 'Автор Скрытого', 0, 'https://example.com/скрытый', 0, 0),
+       (9503, 913, 'Автор С Форума', 777, NULL, 1, 0);
