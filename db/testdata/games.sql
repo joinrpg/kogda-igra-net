@@ -195,3 +195,15 @@ VALUES (9901, 'testadmin', 'admin@example.com', NOW(), CURRENT_DATE, 1),
        (9902, 'testplain', 'plain@example.com', NOW(), CURRENT_DATE, 0);
 
 INSERT INTO user_privs (uid, pid) VALUES (9901, 2);
+
+-- Редактор полигонов: раздел /edit/polygons/ закрыт правом EDIT_POLYGONS (pid = 5),
+-- то есть третьим, отличным и от EDIT_GAMES, и от USERS_CONTROL.
+INSERT INTO users (user_id, username, email, lastvisit, create_date, editor_flag)
+VALUES (9903, 'testpolygons', 'polygons@example.com', NOW(), CURRENT_DATE, 1);
+
+INSERT INTO user_privs (uid, pid) VALUES (9903, 5);
+
+-- Полигон, на котором не стоит ни одной игры: только такие разрешено удалять
+-- (кнопка удаления рисуется, когда COUNT(kg.id) = 0).
+INSERT INTO ki_polygons (polygon_id, polygon_name, sub_region_id, meta_polygon, deleted_flag)
+VALUES (903, 'Пустующий полигон', 3, 0, 0);

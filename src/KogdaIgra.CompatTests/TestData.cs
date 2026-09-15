@@ -73,6 +73,21 @@ public static class TestData
     /// <summary>Идентификатор права EDIT_GAMES в справочнике privs.</summary>
     public const int EditGamesPrivilegeId = 4;
 
+    /// <summary>Пользователь с правом EDIT_POLYGONS.</summary>
+    public const int PolygonEditorUserId = 9903;
+
+    /// <summary>Полигон, на котором стоят игры, — удалить его нельзя.</summary>
+    public const int PolygonWithGames = 900;
+
+    /// <summary>Полигон без игр — единственный вид, который разрешено удалять.</summary>
+    public const int EmptyPolygonId = 903;
+
+    /// <summary>Название полигона без игр.</summary>
+    public const string EmptyPolygonName = "Пустующий полигон";
+
+    /// <summary>Полигон-заглушка (<c>meta_polygon = 1</c>) — в списке не показывается.</summary>
+    public const string MetaPolygonName = "Полигон не указан";
+
     /// <summary>
     /// <c>allrpg_info_id</c> активной игры: заявку на уже известную игру
     /// <c>add_uri</c> отбрасывает.
