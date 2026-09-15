@@ -100,6 +100,12 @@ public static class TestData
     /// <summary>Название игры из другого региона.</summary>
     public const string SaintPetersburgGameName = "Петербургская тестовая игра";
 
+    /// <summary>Самая залайканная игра во всём наборе (регион Петербурга).</summary>
+    public const int MostLikedGameId = 905;
+
+    /// <summary>Самая залайканная игра в московском регионе.</summary>
+    public const int MostLikedInMoscowId = 913;
+
     /// <summary>Название игры с отзывами.</summary>
     public const string WithReviewsGameName = "Игра с отзывами";
 

@@ -100,10 +100,12 @@ public class ReviewTests(PhpSiteUnderTest site)
     {
         Skip.When(site.StartupFailure is not null, $"PHP-сайт не поднялся: {site.StartupFailure}");
 
-        // Отбор идёт по денормализованному ki_games.review_count > 0, а не по
-        // наличию строк в ki_review. У игры с отзывами счётчик равен 2, хотя
-        // видимых отзывов тоже два, а всего строк три — счётчик и реальность
-        // живут независимо, и рассинхрон ничем не проверяется.
+        // Отбор идёт по денормализованному ki_games.review_count, а не по наличию
+        // строк в ki_review. Само приложение счётчик поддерживает: при добавлении,
+        // скрытии и восстановлении отзыва он пересчитывается запросом COUNT(*)
+        // (см. ReviewEditingTests). Но целостность ничем не защищена — правка
+        // в обход приложения разводит их, и заметить это негде. Здесь фикстуры
+        // ставят счётчик 2 при трёх строках, из которых видимы две.
         var counter = await Database.ScalarAsync<long>(
             site.ConnectionString,
             $"SELECT review_count FROM ki_games WHERE id = {TestData.Games.WithReviews}");
