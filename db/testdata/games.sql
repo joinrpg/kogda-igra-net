@@ -185,3 +185,13 @@ INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, u
 VALUES (9110, 910, make_date(:year, 1, 10), 1, 0),
        (9111, 911, make_date(:year, 1, 10), 1, 0),
        (9112, 912, make_date(:year, 1, 10), 1, 0);
+
+-- Администратор пользователей. Права в проекте разделены: раздел /edit/users/
+-- закрыт правом USERS_CONTROL (pid = 2), а не EDIT_GAMES (pid = 4), поэтому
+-- модератора календаря туда не пускают.
+INSERT INTO users (user_id, username, email, lastvisit, create_date, editor_flag)
+VALUES (9901, 'testadmin', 'admin@example.com', NOW(), CURRENT_DATE, 1),
+       -- Ещё один пользователь без прав: на нём проверяются выдача и отзыв привилегий.
+       (9902, 'testplain', 'plain@example.com', NOW(), CURRENT_DATE, 0);
+
+INSERT INTO user_privs (uid, pid) VALUES (9901, 2);

@@ -58,6 +58,21 @@ public static class TestData
     /// <summary>Имя засеянного модератора — оно выводится в меню после входа.</summary>
     public const string ModeratorUserName = "testmoderator";
 
+    /// <summary>Пользователь с правом USERS_CONTROL — он же администратор учёток.</summary>
+    public const int AdminUserId = 9901;
+
+    /// <summary>Имя администратора учёток.</summary>
+    public const string AdminUserName = "testadmin";
+
+    /// <summary>Пользователь без единой привилегии — «подопытный» для выдачи прав.</summary>
+    public const int PlainUserId = 9902;
+
+    /// <summary>Имя пользователя без привилегий.</summary>
+    public const string PlainUserName = "testplain";
+
+    /// <summary>Идентификатор права EDIT_GAMES в справочнике privs.</summary>
+    public const int EditGamesPrivilegeId = 4;
+
     /// <summary>
     /// <c>allrpg_info_id</c> активной игры: заявку на уже известную игру
     /// <c>add_uri</c> отбрасывает.
