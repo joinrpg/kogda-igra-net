@@ -79,6 +79,12 @@ public static class TestData
     /// <summary>Игра со статусом «OK», чья дата заведомо в будущем (следующий год).</summary>
     public const string FutureGameName = "Игра, которая заведомо впереди";
 
+    /// <summary>Название, под которым заведены две разные игры — кандидаты на слияние.</summary>
+    public const string DuplicateGameName = "Игра-двойник";
+
+    /// <summary>Игра с пустой почтой и датой в следующем году.</summary>
+    public const string FutureWithoutEmailGameName = "Грядущая игра без адреса";
+
     /// <summary>
     /// Год, в котором PHP-приложение показывает календарь по умолчанию.
     /// Правило взято из <c>appcode/base_funcs.php</c>: год по московскому времени,

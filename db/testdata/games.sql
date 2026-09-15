@@ -160,3 +160,28 @@ VALUES (9009, 908, make_date(:year - 1, 6, 1), 1, 0, 0),
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
 VALUES (9108, 908, make_date(:year, 1, 10), 1, 0),
        (9109, 909, make_date(:year, 1, 10), 1, 0);
+
+-- Две игры с одинаковым названием — очередь «Слияние» ищет именно дубли имён
+-- (GROUP BY name HAVING COUNT(id) > 1), см. get_merge_candidates.
+INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,
+                      comment, sub_region_id, deleted_flag, hide_email, players_count,
+                      review_count, photo_count, vk_likes, allrpg_info_id)
+VALUES (910, 'Игра-двойник', '', 1, 900, 'МГ Первая', 'first@example.com',
+        0, 0, '', 3, 0, 0, 10, 0, 0, 0, 20005),
+       (911, 'Игра-двойник', '', 1, 900, 'МГ Вторая', 'second@example.com',
+        0, 0, '', 3, 0, 0, 10, 0, 0, 0, 20006),
+-- Пустая почта у игры в будущем: очереди с суффиксом -future добавляют
+-- условие kgd.begin > NOW(). Год взят следующий, чтобы результат не зависел
+-- от месяца прогона.
+       (912, 'Грядущая игра без адреса', '', 1, 900, 'МГ Грядущая', '',
+        0, 0, '', 3, 0, 0, 15, 0, 0, 0, 20007);
+
+INSERT INTO ki_game_date (game_date_id, game_id, "begin", "time", hidden_flag, "order")
+VALUES (9011, 910, make_date(:year, 4, 5), 1, 0, 0),
+       (9012, 911, make_date(:year, 4, 6), 1, 0, 0),
+       (9013, 912, make_date(:year + 1, 4, 7), 1, 0, 0);
+
+INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
+VALUES (9110, 910, make_date(:year, 1, 10), 1, 0),
+       (9111, 911, make_date(:year, 1, 10), 1, 0),
+       (9112, 912, make_date(:year, 1, 10), 1, 0);
