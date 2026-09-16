@@ -161,10 +161,61 @@ if ($SourceDirectory)
     if ($never.Count -eq 0)
     {
         Write-Host 'Все PHP-файлы хотя бы раз подключались.'
+        return
     }
-    else
+
+    Write-Host "Ни разу не подключались ($($never.Count) файлов) — в проценте выше их нет:"
+    $never | ForEach-Object { Write-Host "  $_" }
+
+    # Оценка общего покрытия, включая незагруженные файлы.
+    #
+    # Xdebug знает число исполняемых строк только для тех файлов, которые
+    # подключались. Для остальных считаем строки грубой эвристикой и калибруем её
+    # по загруженным файлам, где известны оба числа. Точность — порядка десятка
+    # процентов от оценки, поэтому результат и подаётся как оценка.
+    function Measure-CodeLines([string]$Path)
     {
-        Write-Host "Ни разу не подключались ($($never.Count) файлов) — в проценте выше их нет:"
-        $never | ForEach-Object { Write-Host "  $_" }
+        $skip = @('<?php', '?>', '{', '}', '};', 'else', '{}')
+        $count = 0
+        foreach ($line in [System.IO.File]::ReadAllLines($Path))
+        {
+            $trimmed = $line.Trim()
+            if ($trimmed.Length -eq 0) { continue }
+            if ($trimmed -match '^(//|#|\*|/\*|\*/)') { continue }
+            if ($skip -contains $trimmed) { continue }
+            $count++
+        }
+        return $count
+    }
+
+    $loadedHeuristic = 0
+    foreach ($file in $merged.Keys)
+    {
+        $onDisk = Join-Path $root ($file -replace '^/var/www/html/', '')
+        if (Test-Path -LiteralPath $onDisk)
+        {
+            $loadedHeuristic += Measure-CodeLines $onDisk
+        }
+    }
+
+    $neverHeuristic = 0
+    foreach ($file in $never)
+    {
+        $neverHeuristic += Measure-CodeLines (Join-Path $root $file)
+    }
+
+    if ($loadedHeuristic -gt 0)
+    {
+        $calibration = $totalFound / $loadedHeuristic
+        $neverEstimated = [math]::Round($neverHeuristic * $calibration)
+        $grandTotal = $totalFound + $neverEstimated
+        $grandPercent = [math]::Round(100.0 * $totalHit / $grandTotal, 1)
+
+        Write-Host ''
+        Write-Host 'Общее покрытие с учётом незагруженных файлов (оценка):'
+        Write-Host "  измерено Xdebug:            $totalFound строк в $($rows.Count) файлах"
+        Write-Host "  оценка незагруженного:     ~$neverEstimated строк в $($never.Count) файлах"
+        Write-Host "  итого знаменатель:         ~$grandTotal"
+        Write-Host "  покрыто:                    $totalHit (~$grandPercent%)"
     }
 }
