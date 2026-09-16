@@ -7,7 +7,7 @@ compat-теста, — значит портировать вслепую.**
 Точки входа перечислены по файлам `*.php` в `public_html/` PHP-репозитория, исключая
 `appcode/` и `common/` (это библиотеки, а не страницы).
 
-Считано на 189 тестах. Покрыто **41 из 56** точек входа (73%).
+Считано на 197 тестах. Покрыто **43 из 56** точек входа (77%).
 
 ## Покрыто
 
@@ -33,6 +33,8 @@ compat-теста, — значит портировать вслепую.**
 | `/edit/polygons/` | `PolygonAdminTests` |
 | `/edit/problems/*` — все 12 очередей | `ProblemQueueTests`, `ProblemQueueExtraTests` |
 | `/lenta/*` — все 7 лент | `UpdatesFeedTests` |
+| `/about/` | `AboutPageTests` |
+| `/api/game/update-likes.php` | `VkLikesApiTests` (фиксирует поломку, [#77](https://github.com/joinrpg/kogda-igra/issues/77)) |
 | `/noemail/` | `PublicListingTests` |
 | `/data/mg/` | `PublicListingTests` |
 | `/edit/deleted-games/` | `DeletedGamesTests` |
@@ -44,10 +46,9 @@ compat-теста, — значит портировать вслепую.**
 |---|---|---|
 | `/photo/` | Список игр с фото | Раздел сломан целиком — [#75](https://github.com/joinrpg/kogda-igra/issues/75). Фиксировать контракт до решения по превью бессмысленно |
 | `/edit/photo/` | Модерация фото | То же |
-| `/api/game/update-likes.php` | Обновление лайков ВКонтакте | Единственный исходящий вызов наружу (`api.vkontakte.ru`, устаревший эндпоинт). Нужен способ заглушить сеть, не подменяя типы |
 | `/login/joinrpg/` | Вход через OAuth JoinRPG | Требует внешнего сервиса. Харнесс обходит вход засевом сессии |
 | `/logout/` | Выход | Тривиален, но осмысленен только в паре с входом |
-| `/about/`, `/novice/spb/`, `/404/` | Статические страницы | Логики нет, ценность теста низкая |
+| `/novice/spb/`, `/404/` | Статические страницы | Логики нет, ценность теста низкая |
 | `/api/` | Страница описания API | Статическая |
 | `/help-needed/`, `/help-needed/email/` | Игры, которым нужна помощь, и форма отправки | Форма шлёт почту — покрывать вместе с проверкой, что письмо не уходит |
 | `/edit/zayavka/allrpg/` | Очередь заявок из allrpg.info | Связано с [#74](https://github.com/joinrpg/kogda-igra/issues/74) |

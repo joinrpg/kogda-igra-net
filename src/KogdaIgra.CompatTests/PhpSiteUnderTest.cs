@@ -28,6 +28,17 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     public const string CoverageEnvironmentVariable = "COMPAT_COVERAGE_DIR";
 
     /// <summary>
+    /// Хосты, обращения к которым не должны уходить наружу во время тестов.
+    /// </summary>
+    private static readonly string[] UnreachableExternalHosts =
+    [
+        "api.vkontakte.ru",
+        "api.eu.mailgun.net",
+        "id.joinrpg.ru",
+        "devid.joinrpg.ru",
+    ];
+
+    /// <summary>
     /// Образ PHP-версии. По умолчанию — опубликованный в ghcr.io: пакет публичный,
     /// анонимный pull работает. Подменить (например, на локально собранный из соседнего
     /// чекаута PHP-репозитория) можно через <see cref="ImageEnvironmentVariable"/> —
@@ -117,6 +128,18 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             // MAILGUN_KEY и JOINRPG_CLIENT_ID/SECRET намеренно не заданы: без них PHP-код
             // сам становится no-op на внешних интеграциях (требование ADR 0001).
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080));
+
+        // Внешние хосты уводятся в никуда. Ключей для почты и OAuth в окружении нет,
+        // поэтому туда обращений и так не будет, а вот VK приложение дёргает без
+        // всяких ключей: без этой подмены тест эндпоинта лайков стучался бы
+        // в настоящий api.vkontakte.ru с машины разработчика и из CI.
+        //
+        // 127.0.0.1 внутри контейнера — это сам контейнер, где на 443 никто
+        // не слушает, так что соединение отвергается сразу, без ожидания таймаута.
+        foreach (var host in UnreachableExternalHosts)
+        {
+            builder = builder.WithExtraHost(host, "127.0.0.1");
+        }
 
         // Замер покрытия PHP: каталог с хоста подключается внутрь, и образ с Xdebug
         // складывает туда по файлу на запрос. Включается только переменной окружения,
