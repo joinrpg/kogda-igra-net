@@ -27,6 +27,15 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     /// </summary>
     public const string CoverageEnvironmentVariable = "COMPAT_COVERAGE_DIR";
 
+    /// <summary>Имя, под которым PHP-контейнер видит поддельный сервер входа.</summary>
+    private const string IdentityNetworkAlias = "joinrpg-id";
+
+    /// <summary>Идентификатор клиента, который приложение шлёт при обмене кода.</summary>
+    public const string OAuthClientId = "compat-test-client";
+
+    /// <summary>Секрет клиента — проверяется тестами в журнале запросов.</summary>
+    public const string OAuthClientSecret = "compat-test-secret";
+
     /// <summary>
     /// Хосты, обращения к которым не должны уходить наружу во время тестов.
     /// </summary>
@@ -59,6 +68,8 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     private INetwork? network;
     private PostgreSqlContainer? database;
     private IContainer? site;
+    private IContainer? identityProvider;
+    private string? identityRequestLog;
 
     /// <summary>
     /// Причина, по которой сайт не поднялся (нет docker, нет доступа к приватному образу и т.п.).
@@ -111,6 +122,22 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         await DatabaseSchema.ApplyAsync(database, DatabaseUser, DatabaseName);
         await TestData.SeedAsync(database, DatabaseUser, DatabaseName);
 
+        // Поддельный сервер входа поднимается до сайта: приложению нужен его адрес.
+        // Работает по обычному HTTP — адрес берётся из JOINRPG_ID_BASE, так что
+        // сертификат не нужен и PHP-код не меняется. Подробности — в docs/compat-tests.md.
+        identityRequestLog = Path.Combine(Path.GetTempPath(), $"kogda-oidc-{Guid.NewGuid():N}");
+        _ = Directory.CreateDirectory(identityRequestLog);
+
+        identityProvider = new ContainerBuilder(ImageName)
+            .WithNetwork(network)
+            .WithNetworkAliases(IdentityNetworkAlias)
+            .WithBindMount(Path.Combine(RepositoryLayout.Root.FullName, "oidc-mock"), "/var/www/html")
+            .WithBindMount(identityRequestLog, "/requests")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080))
+            .Build();
+
+        await identityProvider.StartAsync();
+
         // Порт выбираем сами: PHP-приложению нужно знать свой публичный адрес (SITENAME_HOST)
         // ещё до старта, поэтому случайный порт от Testcontainers тут не подходит.
         var hostPort = FindFreePort();
@@ -125,8 +152,13 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             .WithEnvironment("POSTGRES_PASSWORD", DatabasePassword)
             .WithEnvironment("SITENAME_HOST", $"localhost:{hostPort}")
             .WithEnvironment("SITENAME_SCHEME", "http")
-            // MAILGUN_KEY и JOINRPG_CLIENT_ID/SECRET намеренно не заданы: без них PHP-код
-            // сам становится no-op на внешних интеграциях (требование ADR 0001).
+            .WithEnvironment("JOINRPG_ID_BASE", $"http://{IdentityNetworkAlias}:8080")
+            .WithEnvironment("JOINRPG_CLIENT_ID", OAuthClientId)
+            .WithEnvironment("JOINRPG_CLIENT_SECRET", OAuthClientSecret)
+            // MAILGUN_KEY намеренно не задан: без него Email::mg_send выходит первой
+            // же строкой, и почта наружу не уходит (требование ADR 0001).
+            // Ключи OAuth, наоборот, заданы — вход проверяется против поддельного
+            // сервера, поднятого выше.
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080));
 
         // Внешние хосты уводятся в никуда. Ключей для почты и OAuth в окружении нет,
@@ -234,6 +266,19 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         return client;
     }
 
+    /// <summary>
+    /// Запросы, которые приложение отправило на сервер входа, в порядке поступления.
+    /// Каждая строка — JSON с полями запроса.
+    /// </summary>
+    public IReadOnlyList<string> IdentityProviderRequests
+    {
+        get
+        {
+            var log = Path.Combine(identityRequestLog ?? string.Empty, "requests.log");
+            return File.Exists(log) ? File.ReadAllLines(log) : [];
+        }
+    }
+
     public async Task ResetDatabaseAsync(CancellationToken cancellationToken = default)
     {
         if (database is null)
@@ -273,10 +318,30 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             database = null;
         }
 
+        if (identityProvider is not null)
+        {
+            await identityProvider.DisposeAsync();
+            identityProvider = null;
+        }
+
         if (network is not null)
         {
             await network.DisposeAsync();
             network = null;
+        }
+
+        if (identityRequestLog is not null && Directory.Exists(identityRequestLog))
+        {
+            try
+            {
+                Directory.Delete(identityRequestLog, recursive: true);
+            }
+            catch (IOException)
+            {
+                // Каталог мог остаться занятым docker-демоном; для теста это неважно.
+            }
+
+            identityRequestLog = null;
         }
     }
 }

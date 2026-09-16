@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Apache не пробрасывает заголовок Authorization в PHP — без этой строки
+# $_SERVER['HTTP_AUTHORIZATION'] в user_info оказывается пустым, и токен не разобрать.
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
