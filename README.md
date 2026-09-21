@@ -20,11 +20,11 @@ Postgres.
 
 ```bash
 dotnet build
-dotnet test     # нужен Docker и переменная KOGDA_IGRA_IMAGE
+dotnet test     # нужен только запущенный Docker
 ```
 
-Образ PHP-версии приватный, поэтому перед первым прогоном его надо собрать локально — пошагово в
-[docs/compat-tests.md](docs/compat-tests.md).
+Образ PHP-версии (`ghcr.io/joinrpg/kogda-igra:latest`) публичный и тянется анонимно — настраивать
+ничего не надо. Как подменить его локально собранным — в [docs/compat-tests.md](docs/compat-tests.md).
 
 ## Документация
 

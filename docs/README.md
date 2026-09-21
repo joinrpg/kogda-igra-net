@@ -12,6 +12,8 @@
 - [ADR001: Репозиторий и стратегия тестирования](adr001-repo-and-testing-strategy.md) — отдельный
   репозиторий, PHP-версия как чёрный ящик и оракул поведения
 - [ADR002: Тестовый стек — TUnit на Microsoft.Testing.Platform](adr002-test-stack.md)
+- [ADR003: Структура приложения на .NET](adr003-application-structure.md) — слои, компоненты
+  `JoinRpg.Common.*`, типизированные id, легаси-схема БД и реестр расхождений
 
 ## Команды
 

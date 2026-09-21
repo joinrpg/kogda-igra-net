@@ -5,6 +5,7 @@
     <File Path="docs/README.md" />
     <File Path="docs/adr001-repo-and-testing-strategy.md" />
     <File Path="docs/adr002-test-stack.md" />
+    <File Path="docs/adr003-application-structure.md" />
     <File Path="docs/compat-tests.md" />
   </Folder>
   <Folder Name="/Tests/">
