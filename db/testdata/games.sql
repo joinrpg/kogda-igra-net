@@ -248,3 +248,25 @@ VALUES (9501, 913, 'Автор Видимого', 0, 'https://example.com/отз
 UPDATE ki_games SET vk_likes = 50 WHERE id = 905;
 UPDATE ki_games SET vk_likes = 42 WHERE id = 913;
 UPDATE ki_games SET vk_likes = 17 WHERE id = 906;
+
+-- Фото. Раздел /photo/ отбирает игры по счётчику photo_count > 0, как /reviews/
+-- по review_count. Сами превью отдаются по несуществующему адресу
+-- (joinrpg/kogda-igra#75), но список игр при этом работает.
+UPDATE ki_games SET photo_count = 3 WHERE id = 913;
+
+INSERT INTO ki_photo (photo_id, game_id, photo_author, photo_uri, author_id,
+                      photo_comment, photo_good_flag)
+VALUES (9601, 913, 'Фотограф Тестовый', 'https://example.com/фото', NULL, 'Снято на закате', 1),
+       -- Ссылка на YouTube распознаётся как видео, а не как фото (media.php).
+       (9602, 913, 'Видеограф Тестовый', 'http://www.youtube.com/watch?v=TESTVIDEO', NULL, '', 0),
+       -- Фото с автором-пользователем: author_id заполняется только когда при
+       -- добавлении указали имя в ЖЖ (logic/photo.php). Без него там остаётся NULL,
+       -- как у двух фото выше, и это обычный случай, а не редкость.
+       (9603, 913, NULL, 'https://example.com/фото-от-юзера', 9900, '', 0);
+
+-- Фотомодератор: раздел /edit/photo/ закрыт правом PHOTO (pid = 6) либо
+-- PHOTO_SELF (pid = 7) — это четвёртое и пятое независимые права.
+INSERT INTO users (user_id, username, email, lastvisit, create_date, editor_flag)
+VALUES (9904, 'testphoto', 'photo@example.com', NOW(), CURRENT_DATE, 1);
+
+INSERT INTO user_privs (uid, pid) VALUES (9904, 6);

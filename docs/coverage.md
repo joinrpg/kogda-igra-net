@@ -7,7 +7,7 @@ compat-теста, — значит портировать вслепую.**
 Точки входа перечислены по файлам `*.php` в `public_html/` PHP-репозитория, исключая
 `appcode/` и `common/` (это библиотеки, а не страницы).
 
-Считано на 208 тестах. Покрыто **44 из 56** точек входа (79%).
+Считано на 235 тестах. Покрыто **все 56** точек входа (100%).
 
 ## Покрыто
 
@@ -34,6 +34,13 @@ compat-теста, — значит портировать вслепую.**
 | `/edit/problems/*` — все 12 очередей | `ProblemQueueTests`, `ProblemQueueExtraTests` |
 | `/lenta/*` — все 7 лент | `UpdatesFeedTests` |
 | `/about/` | `AboutPageTests` |
+| `/404/`, `/novice/spb/`, `/logout/`, `/service/message.php` | `ServicePagesTests` |
+| `/edit/users/by-email/` | `ServicePagesTests` |
+| `/api/`, короткие адреса `/api/game/<id>`, `/api/changed/<ts>`, `/api/allrpg-info/<id>` | `CanonicalApiUrlTests` |
+| `/photo/`, `/edit/photo/` | `PhotoAndHelpTests` (правка фото ломается, [#81](https://github.com/joinrpg/kogda-igra/issues/81)) |
+| `/help-needed/`, `/help-needed/email/` | `PhotoAndHelpTests` (список сломан, [#82](https://github.com/joinrpg/kogda-igra/issues/82)) |
+| `/data/export/excel/` | `PhotoAndHelpTests` |
+| `/edit/zayavka/allrpg/` | `PhotoAndHelpTests` |
 | `/login/joinrpg/` | `OAuthLoginTests` (против поддельного сервера входа) |
 | `/api/game/update-likes.php` | `VkLikesApiTests` (фиксирует поломку, [#77](https://github.com/joinrpg/kogda-igra/issues/77)) |
 | `/noemail/` | `PublicListingTests` |
@@ -45,16 +52,9 @@ compat-теста, — значит портировать вслепую.**
 
 | Точка входа | Что это | Почему отложено |
 |---|---|---|
-| `/photo/` | Список игр с фото | Раздел сломан целиком — [#75](https://github.com/joinrpg/kogda-igra/issues/75). Фиксировать контракт до решения по превью бессмысленно |
-| `/edit/photo/` | Модерация фото | То же |
-| `/logout/` | Выход | Тривиален, но осмысленен только в паре с входом |
-| `/novice/spb/`, `/404/` | Статические страницы | Логики нет, ценность теста низкая |
-| `/api/` | Страница описания API | Статическая |
-| `/help-needed/`, `/help-needed/email/` | Игры, которым нужна помощь, и форма отправки | Форма шлёт почту — покрывать вместе с проверкой, что письмо не уходит |
-| `/edit/zayavka/allrpg/` | Очередь заявок из allrpg.info | Связано с [#74](https://github.com/joinrpg/kogda-igra/issues/74) |
-| `/data/export/excel/` | Выгрузка в Excel | Ответ — бинарный файл, нужен отдельный способ проверки |
-| `/service/message.php` | Показ произвольного сообщения | Вспомогательная |
-| `/edit/users/by-email/` | — | **Файл пустой** (321 байт, без кода). Похоже, заготовка |
+| `/login/joinrpg/` — обратный вызов с настоящего сервера | Вход через OAuth | Сам поток покрыт против поддельного сервера (`OAuthLoginTests`). Не проверяется только совместимость с настоящим id.joinrpg.ru |
+
+Всё остальное покрыто.
 
 ## Как это измерялось
 
@@ -67,18 +67,16 @@ compat-теста, — значит портировать вслепую.**
 Снимается Xdebug'ом, **без единой правки в PHP-репозитории**: образ собирается поверх
 опубликованного. Как снять и что означают цифры — [coverage/README.md](../coverage/README.md).
 
-Последний замер на 189 тестах:
+Последний замер на 235 тестах: **3112 строк из 3977 (78.2%)** — и это полная цифра,
+без оговорок: теперь **все 95 PHP-файлов** хотя бы раз подключались, так что оценивать
+незагруженную часть больше не нужно.
 
-- **77.2%** исполненного кода — 2679 строк из 3470 в 77 файлах, которые хотя бы раз
-  подключались (это то, что меряет Xdebug);
-- **около 67.5%** приложения в целом — если добавить в знаменатель 18 файлов, которые
-  не подключались ни разу (оценка, метод в [coverage/README.md](../coverage/README.md)).
-
-Низкое покрытие отдельных файлов в основном честно отражает сломанные разделы
+Оставшиеся аутсайдеры — сломанные разделы
 ([#69](https://github.com/joinrpg/kogda-igra/issues/69),
 [#74](https://github.com/joinrpg/kogda-igra/issues/74),
 [#75](https://github.com/joinrpg/kogda-igra/issues/75),
-[#76](https://github.com/joinrpg/kogda-igra/issues/76)), а не пробелы в тестах.
-Два пробела, которые замер выявил, уже закрыты: `appcode/best_calendar.php` (7% → 90%)
-и `appcode/logic/review.php` (18% → 81%). Оба раздела по таблице точек входа выглядели
-покрытыми — страницы открывались и отвечали, — но ветки внутри не исполнялись.
+[#76](https://github.com/joinrpg/kogda-igra/issues/76),
+[#81](https://github.com/joinrpg/kogda-igra/issues/81),
+[#82](https://github.com/joinrpg/kogda-igra/issues/82)): их код обрывается на фатальной
+ошибке, и дальше строки просто не исполняются. Фиксировать контракт того, что всё равно
+падает, смысла нет — сначала нужно решение по самим багам.

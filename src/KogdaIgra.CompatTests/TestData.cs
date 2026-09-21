@@ -79,6 +79,12 @@ public static class TestData
     /// <summary>Пользователь с правом EDIT_POLYGONS.</summary>
     public const int PolygonEditorUserId = 9903;
 
+    /// <summary>Пользователь с правом PHOTO — модератор фотографий.</summary>
+    public const int PhotoModeratorUserId = 9904;
+
+    /// <summary>Автор засеянной фотографии.</summary>
+    public const string PhotoAuthorName = "Фотограф Тестовый";
+
     /// <summary>Полигон, на котором стоят игры, — удалить его нельзя.</summary>
     public const int PolygonWithGames = 900;
 
