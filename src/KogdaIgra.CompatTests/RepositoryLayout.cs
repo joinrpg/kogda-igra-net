@@ -9,7 +9,7 @@ public static class RepositoryLayout
     /// <summary>Корень репозитория — каталог, в котором лежит KogdaIgra.slnx.</summary>
     public static DirectoryInfo Root { get; } = FindRoot();
 
-    /// <summary>Каталог db/ со схемой и миграциями, скопированными из PHP-репозитория.</summary>
+    /// <summary>Каталог db/ с тестовыми данными. Схема БД берётся из образа сайта, см. <see cref="DatabaseSchema"/>.</summary>
     public static DirectoryInfo Database { get; } = new(Path.Combine(Root.FullName, "db"));
 
     private static DirectoryInfo FindRoot()

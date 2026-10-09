@@ -3,12 +3,59 @@ using DotNet.Testcontainers.Containers;
 namespace KogdaIgra.CompatTests;
 
 /// <summary>
-/// Накатывает схему kogda-igra на пустую БД.
-/// Скрипты — это вывод <c>pg_dump</c> с живой dev-базы, снятый
-/// <c>utils/fetch-dev-db.ps1</c> (см. db/README.md).
+/// Схема kogda-igra, взятая из образа сайта.
+/// <para>
+/// PHP-репозиторий кладёт в образ свой <c>db/init/</c> (снимок dev-базы: структура и
+/// справочники) каталогом <see cref="DirectoryInImage"/>. Схема читается из того же образа,
+/// против которого идут тесты, поэтому версии схемы и кода совпадают всегда — в том числе
+/// при подмене образа через <c>KOGDA_IGRA_IMAGE</c> (см. db/README.md).
+/// </para>
 /// </summary>
-public static class DatabaseSchema
+public sealed class DatabaseSchema
 {
+    /// <summary>Каталог со скриптами схемы внутри образа PHP-версии.</summary>
+    public const string DirectoryInImage = "/db-init";
+
+    private readonly IReadOnlyList<(string Name, byte[] Content)> scripts;
+
+    private DatabaseSchema(IReadOnlyList<(string Name, byte[] Content)> scripts) => this.scripts = scripts;
+
+    /// <summary>
+    /// Читает скрипты из запущенного контейнера сайта. Порядок — по имени файла,
+    /// как их выполнил бы <c>docker-entrypoint-initdb.d</c> в Postgres.
+    /// </summary>
+    public static async Task<DatabaseSchema> ReadFromSiteAsync(
+        IContainer site,
+        CancellationToken cancellationToken = default)
+    {
+        var listing = await site.ExecAsync(["ls", "-1", DirectoryInImage], cancellationToken);
+        if (listing.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"В образе {site.Image.FullName} нет {DirectoryInImage}: образ собран раньше, " +
+                $"чем схема переехала в PHP-репозиторий. {listing.Stderr}");
+        }
+
+        var names = listing.Stdout
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(name => name.EndsWith(".sql", StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            throw new InvalidOperationException($"В {DirectoryInImage} образа {site.Image.FullName} нет ни одного .sql.");
+        }
+
+        var scripts = new List<(string Name, byte[] Content)>();
+        foreach (var name in names)
+        {
+            scripts.Add((name, await site.ReadFileAsync($"{DirectoryInImage}/{name}", cancellationToken)));
+        }
+
+        return new DatabaseSchema(scripts);
+    }
+
     /// <summary>
     /// Применяет схему и справочники.
     /// Выполняется <c>psql</c> внутри контейнера, а не через Npgsql: вывод <c>pg_dump</c> —
@@ -16,18 +63,16 @@ public static class DatabaseSchema
     /// <c>\unrestrict</c>) и блоки <c>COPY ... FROM stdin</c>, которые обычное соединение
     /// выполнить не может.
     /// </summary>
-    public static async Task ApplyAsync(
+    public async Task ApplyAsync(
         IContainer database,
         string user,
         string databaseName,
         CancellationToken cancellationToken = default)
     {
-        foreach (var script in EnumerateScripts())
+        foreach (var (name, content) in scripts)
         {
-            // CopyAsync принимает каталог назначения, имя файла берётся из источника.
-            const string directoryInContainer = "/tmp";
-            var pathInContainer = $"{directoryInContainer}/{script.Name}";
-            await database.CopyAsync(script, directoryInContainer, ct: cancellationToken);
+            var pathInContainer = $"/tmp/{name}";
+            await database.CopyAsync(content, pathInContainer, ct: cancellationToken);
 
             var result = await database.ExecAsync(
                 [
@@ -43,7 +88,7 @@ public static class DatabaseSchema
             if (result.ExitCode != 0)
             {
                 throw new InvalidOperationException(
-                    $"Не применился {script.Name} (код {result.ExitCode}): {result.Stderr}");
+                    $"Не применился {name} (код {result.ExitCode}): {result.Stderr}");
             }
         }
     }
@@ -52,7 +97,7 @@ public static class DatabaseSchema
     /// Возвращает БД в исходное состояние: для write-тестов, которым нужна чистая база
     /// перед каждой проверкой (ADR 0001).
     /// </summary>
-    public static async Task ResetAsync(
+    public async Task ResetAsync(
         IContainer database,
         string user,
         string databaseName,
@@ -74,31 +119,5 @@ public static class DatabaseSchema
         }
 
         await ApplyAsync(database, user, databaseName, cancellationToken);
-    }
-
-    private static IEnumerable<FileInfo> EnumerateScripts()
-    {
-        var schemaDirectory = new DirectoryInfo(Path.Combine(RepositoryLayout.Database.FullName, "schema"));
-
-        var schema = new FileInfo(Path.Combine(schemaDirectory.FullName, "schema.sql"));
-        if (!schema.Exists)
-        {
-            throw new FileNotFoundException(
-                "Нет db/schema/schema.sql — схема БД не снята, см. db/README.md.", schema.FullName);
-        }
-
-        yield return schema;
-
-        // Справочники (регионы, типы игр, статусы) лежат отдельно: pg_dump --schema-only
-        // данных не содержит, а без справочников сайт не отрисует ни одной страницы.
-        var referenceData = new FileInfo(Path.Combine(schemaDirectory.FullName, "reference-data.sql"));
-        if (!referenceData.Exists)
-        {
-            throw new FileNotFoundException(
-                "Нет db/schema/reference-data.sql — справочники не сняты, см. db/README.md.",
-                referenceData.FullName);
-        }
-
-        yield return referenceData;
     }
 }
