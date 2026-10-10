@@ -73,10 +73,25 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
     private string? identityRequestLog;
 
     /// <summary>
+    /// Переменная окружения, по которой узнаём CI. GitHub Actions ставит <c>CI=true</c>.
+    /// </summary>
+    public const string CiEnvironmentVariable = "CI";
+
+    /// <summary>
     /// Причина, по которой сайт не поднялся (нет docker, нет доступа к приватному образу и т.п.).
     /// Тесты используют её, чтобы пропуститься с внятным сообщением, а не упасть.
+    /// В CI до пропуска не доходит: там <see cref="InitializeAsync"/> бросает исключение.
     /// </summary>
     public string? StartupFailure { get; private set; }
+
+    /// <summary>
+    /// Запущены ли тесты в CI. Там несостоявшийся старт сайта — ошибка: иначе все тесты
+    /// пропустятся, и зелёная сборка ничего не проверит. Значение <c>false</c> считается
+    /// «не CI», чтобы переменную можно было явно погасить.
+    /// </summary>
+    private static bool IsCi =>
+        Environment.GetEnvironmentVariable(CiEnvironmentVariable) is { Length: > 0 } value
+            && !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
 
     public Uri BaseUrl
     {
@@ -101,6 +116,16 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         {
             StartupFailure = e.Message;
             await DisposeAsync();
+
+            // Исключение из IAsyncInitializer общей фикстуры TUnit превращает в падение
+            // каждого теста, которому она нужна, — ровно то, что требуется в CI.
+            if (IsCi)
+            {
+                throw new InvalidOperationException(
+                    $"PHP-сайт не поднялся, а в CI ({CiEnvironmentVariable}={Environment.GetEnvironmentVariable(CiEnvironmentVariable)}) "
+                        + $"это ошибка, а не повод пропустить тесты: {e.Message}",
+                    e);
+            }
         }
     }
 

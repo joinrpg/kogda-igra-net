@@ -56,7 +56,8 @@ dotnet test                                         # Все тесты
 - Фикстура сайта — `[ClassDataSource<PhpSiteUnderTest>(Shared = SharedType.PerTestSession)]`,
   сама фикстура реализует `IAsyncInitializer` + `IAsyncDisposable`.
 - Динамический пропуск — `Skip.When(condition, reason)`. Им же тесты пропускаются, когда Docker
-  или образ недоступны (`PhpSiteUnderTest.StartupFailure`).
+  или образ недоступны (`PhpSiteUnderTest.StartupFailure`) — но только локально. В CI (задана
+  переменная `CI`) несостоявшийся старт сайта роняет тесты, а не пропускает их.
 - **Моки запрещены** — ни Moq, ни NSubstitute. Compat-тест проверяет реальный ответ реального сайта;
   внешние интеграции глушатся отсутствием ключей в окружении контейнера, а не подменой типов.
 - **Готча, проверено экспериментально**: PHP-приложение отдаёт **HTTP 200 даже при сломанной БД** —
