@@ -16,8 +16,7 @@ jobs:
     name: Build
     runs-on: ubuntu-24.04
     permissions:
-      checks: write
-      actions: write
+      contents: read
 
     steps:
     - name: Checkout Repo
@@ -42,27 +41,16 @@ jobs:
     # Тесты используют TUnit на Microsoft.Testing.Platform (MTP), а не VSTest.
     # MTP-режим dotnet test включён секцией "test" в global.json; аргументы платформы
     # тестирования отделяются "--", чтобы парсер не путал их с аргументами dotnet test.
-    # Опцию --report-trx даёт пакет Microsoft.Testing.Extensions.TrxReport.
+    # Отдельный отчёт не нужен: TUnit сам пишет сводку прогона в summary job'а
+    # (GITHUB_STEP_SUMMARY), а упавший тест и так валит этот шаг.
+    # Каталог результатов задан явно: оттуда HTML-отчёт TUnit забирает следующий шаг.
     - name: Test
-      run: dotnet test -c Release --no-build -- --report-trx --report-trx-filename results.trx --results-directory ./TestResults
+      run: dotnet test -c Release --no-build -- --results-directory ./TestResults
 
     - name: Save test results to artifacts
-      uses: actions/upload-artifact@v7  # upload test results
-      if: success() || failure()        # run this step even if previous step failed
+      uses: actions/upload-artifact@v7  # HTML-отчёт TUnit
+      if: success() || failure()        # и при упавших тестах тоже
       with:
         name: test-results
         path: TestResults
 
-  report:
-    runs-on: ubuntu-24.04
-    needs: build
-    if: always()
-    permissions:
-      checks: write
-    steps:
-      - uses: dorny/test-reporter@v3.0.0
-        with:
-          artifact: test-results # artifact name
-          name: Tests                       # Name of the check run which will be created
-          path: '*.trx'                     # Path to test results (inside artifact .zip)
-          reporter: dotnet-trx              # Format of test results

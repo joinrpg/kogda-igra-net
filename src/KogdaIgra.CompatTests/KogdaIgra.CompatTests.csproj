@@ -5,8 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="TUnit" />
-    <!-- Даёт MTP опцию report-trx, которую использует CI -->
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Npgsql" />

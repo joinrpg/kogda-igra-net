@@ -39,9 +39,9 @@ MTP-режим включается секцией в [`global.json`](../global.
 
 Вариант с `dotnet.config` пробовали — он **не работает**, `dotnet test` продолжает уходить в VSTest.
 
-Аргументы платформы тестирования передаются после `--`. CI пользуется `--report-trx`, что требует
-отдельного пакета `Microsoft.Testing.Extensions.TrxReport` — он подключён в
-`src/KogdaIgra.CompatTests/KogdaIgra.CompatTests.csproj`.
+Аргументы платформы тестирования передаются после `--`. Отчёты дополнительных пакетов не требуют:
+TUnit сам пишет HTML-отчёт в каталог результатов, а в GitHub Actions — ещё и сводку прогона
+в summary job'а (`GITHUB_STEP_SUMMARY`).
 
 Из возможностей TUnit харнесс использует:
 
