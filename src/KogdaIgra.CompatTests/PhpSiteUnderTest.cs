@@ -128,6 +128,19 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         identityRequestLog = Path.Combine(Path.GetTempPath(), $"kogda-oidc-{Guid.NewGuid():N}");
         _ = Directory.CreateDirectory(identityRequestLog);
 
+        // Журнал пишет Apache в контейнере от www-data, а каталог на хосте принадлежит
+        // пользователю, запустившему тесты. На Linux (CI) с правами 755 запись молча
+        // не проходит — мок пишет через @file_put_contents, — и журнал остаётся пустым.
+        // Docker Desktop на Windows права не проверяет, поэтому локально это не видно.
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(
+                identityRequestLog,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                    | UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute
+                    | UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+        }
+
         identityProvider = new ContainerBuilder(ImageName)
             .WithNetwork(network)
             .WithNetworkAliases(IdentityNetworkAlias)
