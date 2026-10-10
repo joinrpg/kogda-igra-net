@@ -67,6 +67,7 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
 
     private INetwork? network;
     private PostgreSqlContainer? database;
+    private DatabaseSchema? schema;
     private IContainer? site;
     private IContainer? identityProvider;
     private string? identityRequestLog;
@@ -119,8 +120,6 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
             .Build();
 
         await database.StartAsync();
-        await DatabaseSchema.ApplyAsync(database, DatabaseUser, DatabaseName);
-        await TestData.SeedAsync(database, DatabaseUser, DatabaseName);
 
         // Поддельный сервер входа поднимается до сайта: приложению нужен его адрес.
         // Работает по обычному HTTP — адрес берётся из JOINRPG_ID_BASE, так что
@@ -199,6 +198,12 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
         site = builder.Build();
 
         await site.StartAsync();
+
+        // Схема берётся из образа сайта, поэтому накатывается только после его старта.
+        // Самому сайту БД до первого запроса не нужна: PHP подключается к ней лениво.
+        schema = await DatabaseSchema.ReadFromSiteAsync(site);
+        await schema.ApplyAsync(database, DatabaseUser, DatabaseName);
+        await TestData.SeedAsync(database, DatabaseUser, DatabaseName);
 
         BaseUrl = new Uri($"http://localhost:{hostPort}/");
         await WaitUntilRespondsAsync();
@@ -294,12 +299,12 @@ public sealed class PhpSiteUnderTest : ISiteUnderTest, IAsyncInitializer, IAsync
 
     public async Task ResetDatabaseAsync(CancellationToken cancellationToken = default)
     {
-        if (database is null)
+        if (database is null || schema is null)
         {
             throw new InvalidOperationException("БД не поднята.");
         }
 
-        await DatabaseSchema.ResetAsync(database, DatabaseUser, DatabaseName, cancellationToken);
+        await schema.ResetAsync(database, DatabaseUser, DatabaseName, cancellationToken);
         await TestData.SeedAsync(database, DatabaseUser, DatabaseName, cancellationToken);
     }
 
