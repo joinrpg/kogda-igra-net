@@ -2,6 +2,8 @@ name: Build
 
 on:
   pull_request:
+  # Очередь слияния (ruleset master) проверяет PR на этом событии; без него Build в очереди не запустится
+  merge_group:
   push:
     branches:
       - master
