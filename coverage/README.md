@@ -74,7 +74,7 @@ xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
 | `appcode/logic/photo.php` | 19% | То же |
 | `edit/merge/index.php` | 29% | Слияние падает на любых параметрах ([#76](https://github.com/joinrpg/kogda-igra/issues/76)) |
 | `api/allrpg-info/find-by-id.php` | 33% | Эндпоинт мёртв ([#74](https://github.com/joinrpg/kogda-igra/issues/74)) |
-| `archive/index.php` | 44% | Страница обрывается на fatal ([#69](https://github.com/joinrpg/kogda-igra/issues/69)) |
+| `archive/index.php` | 44% | Страница обрывалась на fatal ([#69](https://github.com/joinrpg/kogda-igra/issues/69)); исправлено после замера, цифра устарела |
 
 Низкое покрытие здесь честно отражает сломанные разделы, а не пробелы в тестах:
 фиксировать контракт кода, который всё равно падает, смысла нет.

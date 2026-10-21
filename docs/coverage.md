@@ -17,7 +17,7 @@ compat-теста, — значит портировать вслепую.**
 | `/game/<id>/` | `GamePageTests`, `ReviewTests` |
 | `/search/` (через `/find/<запрос>`) | `SearchTests` |
 | `/search.php` | `SearchTests` (легаси-редирект) |
-| `/archive/` | `ArchiveTests` (фиксирует поломку, [#69](https://github.com/joinrpg/kogda-igra/issues/69)) |
+| `/archive/` | `ArchiveTests` |
 | `/reviews/` | `ReviewTests` |
 | `/stat/` | `StatisticsTests` |
 | `/user/<имя>` | `UserProfileTests` |
@@ -72,8 +72,7 @@ compat-теста, — значит портировать вслепую.**
 незагруженную часть больше не нужно.
 
 Оставшиеся аутсайдеры — сломанные разделы
-([#69](https://github.com/joinrpg/kogda-igra/issues/69),
-[#74](https://github.com/joinrpg/kogda-igra/issues/74),
+([#74](https://github.com/joinrpg/kogda-igra/issues/74),
 [#75](https://github.com/joinrpg/kogda-igra/issues/75),
 [#76](https://github.com/joinrpg/kogda-igra/issues/76),
 [#81](https://github.com/joinrpg/kogda-igra/issues/81),
