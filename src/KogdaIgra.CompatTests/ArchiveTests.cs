@@ -1,83 +1,62 @@
 namespace KogdaIgra.CompatTests;
 
 /// <summary>
-/// Контракт страницы архива <c>/archive/</c>.
+/// Контракт страницы архива <c>/archive/</c>: заголовок и ссылки на все годы из
+/// <c>ki_years_cache</c> вида <c>/&lt;год&gt;/</c>, через « :: », по возрастанию.
 /// <para>
-/// <b>Страница сломана в проде.</b> Первый байт <c>archive/index.php</c> — перевод
-/// строки, стоящий до <c>&lt;?php</c>. Он уходит в вывод сразу, HTTP-заголовки
-/// отправляются, и <c>session_start()</c> в <c>user_funcs.php</c> уже не срабатывает.
-/// Суперглобальная <c>$_SESSION</c> не создаётся, а <c>get_user_id()</c> делает по ней
-/// <c>array_key_exists()</c> — на PHP 8 это фатальная ошибка. Вывод обрывается посреди
-/// меню: ни заголовка <c>h1</c>, ни списка годов, ни закрывающего <c>&lt;/body&gt;</c>.
-/// Проверено на https://kogda-igra.ru/archive/ — там ровно то же самое.
-/// Заведено как joinrpg/kogda-igra#69.
-/// </para>
-/// <para>
-/// Тесты ниже фиксируют это как есть: пока баг не исправлен в PHP-версии, порт
-/// обязан вести себя так же, иначе сравнение перестанет быть честным. Когда багу
-/// починят, эти тесты покраснеют — и это правильный сигнал обновить контракт.
+/// До joinrpg/kogda-igra#69 страница обрывалась посреди верхнего меню: перевод строки
+/// перед <c>&lt;?php</c> в <c>archive/index.php</c> не давал стартовать сессии, и
+/// <c>get_user_id()</c> падала с фатальной ошибкой на <c>$_SESSION</c> = null.
 /// </para>
 /// </summary>
 [ClassDataSource<PhpSiteUnderTest>(Shared = SharedType.PerTestSession)]
 public class ArchiveTests(PhpSiteUnderTest site)
 {
-    private async Task<HttpResponseMessage> GetArchiveAsync(HttpClient client)
-        => await client.GetAsync("/archive/");
-
-    [Test]
-    public async Task RespondsWithTwoHundredDespiteFatalError()
+    private async Task<string> GetArchiveAsync()
     {
-        Skip.When(site.StartupFailure is not null, $"PHP-сайт не поднялся: {site.StartupFailure}");
-
         using var client = site.CreateClient();
-        using var response = await GetArchiveAsync(client);
+        using var response = await client.GetAsync("/archive/");
+        var body = await response.Content.ReadAsStringAsync();
 
-        // Ровно та готча, ради которой существует SiteResponse: фатальная ошибка PHP
-        // не мешает отдать 200. По статусу о работоспособности судить нельзя.
         await Assert.That((int)response.StatusCode).IsEqualTo(200);
+        return body;
     }
 
     [Test]
-    public async Task TitleIsRenderedBeforeTheFatalError()
+    public async Task PageIsRenderedToTheEnd()
     {
         Skip.When(site.StartupFailure is not null, $"PHP-сайт не поднялся: {site.StartupFailure}");
 
-        using var client = site.CreateClient();
-        using var response = await GetArchiveAsync(client);
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await GetArchiveAsync();
 
-        // Заголовок успевает вывестись: он идёт до вызова get_username().
-        await Assert.That(SiteResponse.Parse(body).Title).IsEqualTo("КогдаИгра: Архив старых лет");
+        // По статусу судить нельзя (200 отдавался и при фатале), поэтому проверяем,
+        // что вывод дошёл до конца: меню с кнопкой «Добавить» и закрывающие теги.
+        await Assert.That(SiteResponse.LooksLikeHtmlPage(body)).IsTrue();
+        await Assert.That(body).Contains("</body>");
+        await Assert.That(body).Contains("Добавить");
     }
 
     [Test]
-    public async Task OutputIsTruncatedInsideTopMenu()
+    public async Task HasTitleAndHeading()
     {
         Skip.When(site.StartupFailure is not null, $"PHP-сайт не поднялся: {site.StartupFailure}");
 
-        using var client = site.CreateClient();
-        using var response = await GetArchiveAsync(client);
-        var body = await response.Content.ReadAsStringAsync();
+        var document = SiteResponse.Parse(await GetArchiveAsync());
 
-        // Вывод обрывается на месте вызова get_username(): дальше в show() идёт блок
-        // с кнопкой «Добавить игру», а после show() — h1 и список годов.
-        await Assert.That(body).DoesNotContain("</body>");
-        await Assert.That(body).DoesNotContain("<h1>");
-        await Assert.That(body).DoesNotContain("Добавить");
+        await Assert.That(document.Title).IsEqualTo("КогдаИгра: Архив старых лет");
+        await Assert.That(document.QuerySelector("h1")?.TextContent).IsEqualTo("Архив старых лет");
     }
 
     [Test]
-    public async Task YearLinksAreNeverRendered()
+    public async Task ListsYearsFromCache()
     {
         Skip.When(site.StartupFailure is not null, $"PHP-сайт не поднялся: {site.StartupFailure}");
 
-        using var client = site.CreateClient();
-        using var response = await GetArchiveAsync(client);
-        var body = await response.Content.ReadAsStringAsync();
+        var document = SiteResponse.Parse(await GetArchiveAsync());
 
-        // Собственно содержимое архива — ссылки вида /<год>/ — до вывода не доходит.
-        // Ссылка /<год> без завершающего слэша в теле есть, но это полоса годов
-        // из верхнего меню, а не архив.
-        await Assert.That(body).DoesNotContain($"<a href=\"/{TestData.CurrentYear}/\">");
+        // Ссылки архива идут после h1 и, в отличие от полосы годов в верхнем меню,
+        // заканчиваются слэшем. Фикстуры засевают в ki_years_cache только текущий год.
+        var links = document.QuerySelectorAll("h1 ~ a").Select(a => a.GetAttribute("href") ?? "").ToList();
+        await Assert.That(links).IsEquivalentTo([$"/{TestData.CurrentYear}/"]);
     }
 }
