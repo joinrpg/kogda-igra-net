@@ -5,7 +5,7 @@
         <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
     </PropertyGroup>
     <ItemGroup>
-        <PackageVersion Include="AngleSharp" Version="1.8.5" />
+        <PackageVersion Include="AngleSharp" Version="1.8.6" />
         <PackageVersion Include="Npgsql" Version="10.0.3" />
         <PackageVersion Include="Testcontainers" Version="4.16.0" />
         <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
