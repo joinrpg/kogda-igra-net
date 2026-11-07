@@ -101,8 +101,8 @@ INSERT INTO user_privs (uid, pid) VALUES (9900, 4);
 
 -- Свежие записи журнала для лент изменений.
 -- Ленты отбирают обновления за последние три месяца ((NOW() - INTERVAL '3 MONTHS')
--- < update_date, appcode/logic/updates.php), поэтому даты выше, привязанные к январю,
--- в них не попадают — нужны заведомо недавние.
+-- < update_date, appcode/logic/updates.php), поэтому даты выше, четырёхмесячной
+-- давности, в них не попадают — нужны заведомо недавние.
 --
 -- Тип 2 — «Изменено описание игры».
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id, ip_address)
