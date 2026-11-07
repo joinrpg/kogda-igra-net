@@ -65,12 +65,17 @@ VALUES (9001, 901, make_date(:year, 7, 15), 3, 0, 0),
 
 -- ki_updates присоединяется через INNER JOIN (MAX(update_date) по игре).
 -- Без строки здесь игра не появится ни на одной странице.
+-- Даты якорим к NOW() - INTERVAL '4 months', а не к :year: с ноября по декабрь
+-- :year — уже следующий год, и дата из него оказывается в будущем. Якорь
+-- держится вне всех «свежих» окон: ленты берут три месяца
+-- (appcode/logic/updates.php), граница changed.php — 36 часов, блок «новые
+-- игры недели» — 7 дней.
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
-VALUES (9101, 901, make_date(:year, 1, 10), 1, 0),
-       (9102, 902, make_date(:year, 1, 10), 1, 0),
-       (9103, 903, make_date(:year, 1, 10), 1, 0),
-       (9104, 904, make_date(:year, 1, 10), 1, 0),
-       (9105, 905, make_date(:year, 1, 10), 1, 0);
+VALUES (9101, 901, NOW() - INTERVAL '4 months', 1, 0),
+       (9102, 902, NOW() - INTERVAL '4 months', 1, 0),
+       (9103, 903, NOW() - INTERVAL '4 months', 1, 0),
+       (9104, 904, NOW() - INTERVAL '4 months', 1, 0),
+       (9105, 905, NOW() - INTERVAL '4 months', 1, 0);
 
 -- Кэш годов: на список игр не влияет, но без него пустует навигация по годам
 -- (top_menu.php: write_years_list). Заполняется тем же запросом, что и
@@ -135,8 +140,25 @@ VALUES (9007, 906, make_date(:year, 6, 1), 1, 0, 0),
        (9008, 907, make_date(:year, 6, 10), 1, 0, 0);
 
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
-VALUES (9106, 906, make_date(:year, 1, 10), 1, 0),
-       (9107, 907, make_date(:year, 1, 10), 1, 0);
+VALUES (9106, 906, NOW() - INTERVAL '4 months', 1, 0),
+       (9107, 907, NOW() - INTERVAL '4 months', 1, 0);
+
+-- Ещё одна игра без почты, но с датой заведомо в прошлом — она нужна очередям
+-- с суффиксом -future, которые добавляют условие kgd.begin > NOW(): у 906 дата
+-- намеренно в :year (игра видна календарю и /best/ текущего года), и в зависимости
+-- от месяца прогона она сама оказывается будущей. Дату этой игры якорим к NOW(),
+-- чтобы «прошлость» не зависела от календаря.
+INSERT INTO ki_games (id, name, uri, type, polygon, mg, email, show_flags, status,
+                      comment, sub_region_id, deleted_flag, hide_email, players_count,
+                      review_count, photo_count, vk_likes, allrpg_info_id)
+VALUES (914, 'Прошедшая игра без почты', '', 1, 900, 'МГ Прошедшая', '',
+        0, 0, '', 3, 0, 0, 35, 0, 0, 0, 20009);
+
+INSERT INTO ki_game_date (game_date_id, game_id, "begin", "time", hidden_flag, "order")
+VALUES (9015, 914, NOW() - INTERVAL '1 month', 1, 0, 0);
+
+INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
+VALUES (9114, 914, NOW() - INTERVAL '4 months', 1, 0);
 
 -- Две игры для очереди «Прошедшие?». Она отбирает игры со статусом, у которого
 -- future_only_status = 1 (это статус 0 «OK»), чья дата уже прошла: смысл очереди —
@@ -158,8 +180,8 @@ VALUES (9009, 908, make_date(:year - 1, 6, 1), 1, 0, 0),
        (9010, 909, make_date(:year + 1, 6, 1), 1, 0, 0);
 
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
-VALUES (9108, 908, make_date(:year, 1, 10), 1, 0),
-       (9109, 909, make_date(:year, 1, 10), 1, 0);
+VALUES (9108, 908, NOW() - INTERVAL '4 months', 1, 0),
+       (9109, 909, NOW() - INTERVAL '4 months', 1, 0);
 
 -- Две игры с одинаковым названием — очередь «Слияние» ищет именно дубли имён
 -- (GROUP BY name HAVING COUNT(id) > 1), см. get_merge_candidates.
@@ -182,9 +204,9 @@ VALUES (9011, 910, make_date(:year, 4, 5), 1, 0, 0),
        (9013, 912, make_date(:year + 1, 4, 7), 1, 0, 0);
 
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
-VALUES (9110, 910, make_date(:year, 1, 10), 1, 0),
-       (9111, 911, make_date(:year, 1, 10), 1, 0),
-       (9112, 912, make_date(:year, 1, 10), 1, 0);
+VALUES (9110, 910, NOW() - INTERVAL '4 months', 1, 0),
+       (9111, 911, NOW() - INTERVAL '4 months', 1, 0),
+       (9112, 912, NOW() - INTERVAL '4 months', 1, 0);
 
 -- Администратор пользователей. Права в проекте разделены: раздел /edit/users/
 -- закрыт правом USERS_CONTROL (pid = 2), а не EDIT_GAMES (pid = 4), поэтому
@@ -224,7 +246,7 @@ INSERT INTO ki_game_date (game_date_id, game_id, "begin", "time", hidden_flag, "
 VALUES (9014, 913, make_date(:year, 3, 15), 2, 0, 0);
 
 INSERT INTO ki_updates (ki_update_id, game_id, update_date, ki_update_type_id, user_id)
-VALUES (9113, 913, make_date(:year, 1, 10), 1, 0);
+VALUES (9113, 913, NOW() - INTERVAL '4 months', 1, 0);
 
 -- Отзывы. show_review_flag = 1 — виден всем; 0 — скрыт, его показывают только
 -- в форме редактирования игры.

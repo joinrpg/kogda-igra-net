@@ -89,11 +89,16 @@ public class ProblemQueueExtraTests(PhpSiteUnderTest site)
         // чья дата ещё впереди (добавляется условие kgd.begin > NOW()).
         // Названия у игр нарочно непересекающиеся: если одно окажется подстрокой
         // другого, DoesNotContain начнёт срабатывать ложно.
-        await Assert.That(all).Contains(TestData.WithoutEmailGameName);
+        //
+        // Роль «прошедшей» играет отдельная игра с датой-якорем NOW() - INTERVAL:
+        // у «Игры без почты» дата намеренно в CurrentYear (она нужна тестам календаря
+        // и /best/), поэтому в ноябре-декабре она сама оказывается будущей и
+        // законно попадает в «будущую» очередь.
+        await Assert.That(all).Contains(TestData.PastWithoutEmailGameName);
         await Assert.That(all).Contains(TestData.FutureWithoutEmailGameName);
 
         await Assert.That(future).Contains(TestData.FutureWithoutEmailGameName);
-        await Assert.That(future).DoesNotContain(TestData.WithoutEmailGameName);
+        await Assert.That(future).DoesNotContain(TestData.PastWithoutEmailGameName);
     }
 
     [Test]
