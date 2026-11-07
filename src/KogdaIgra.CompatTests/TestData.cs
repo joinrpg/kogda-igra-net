@@ -143,6 +143,13 @@ public static class TestData
     public const string FutureWithoutEmailGameName = "Грядущая игра без адреса";
 
     /// <summary>
+    /// Игра с пустой почтой, чья дата заведомо в прошлом. Дата в сиде якорится
+    /// к NOW(), а не к <see cref="CurrentYear"/>: с ноября по декабрь CurrentYear —
+    /// уже следующий год, и любая дата из него оказывается в будущем.
+    /// </summary>
+    public const string PastWithoutEmailGameName = "Прошедшая игра без почты";
+
+    /// <summary>
     /// Год, в котором PHP-приложение показывает календарь по умолчанию.
     /// Правило взято из <c>appcode/base_funcs.php</c>: год по московскому времени,
     /// а с ноября — уже следующий. Даты игр засеваются в этот же год, иначе они

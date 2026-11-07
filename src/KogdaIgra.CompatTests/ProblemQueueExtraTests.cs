@@ -85,15 +85,22 @@ public class ProblemQueueExtraTests(PhpSiteUnderTest site)
         var all = await GetQueueTextAsync("noemail");
         var future = await GetQueueTextAsync("noemail-future");
 
-        // Обычная очередь показывает обе игры без почты, «будущая» — только ту,
+        // Обычная очередь показывает все игры без почты, «будущая» — только те,
         // чья дата ещё впереди (добавляется условие kgd.begin > NOW()).
         // Названия у игр нарочно непересекающиеся: если одно окажется подстрокой
         // другого, DoesNotContain начнёт срабатывать ложно.
-        await Assert.That(all).Contains(TestData.WithoutEmailGameName);
+        //
+        // Роль «прошедшей» играет отдельная игра с датой-якорем NOW() - INTERVAL:
+        // у «Игры без почты» дата намеренно в CurrentYear (она нужна тестам календаря
+        // и /best/), поэтому в ноябре-декабре она сама оказывается будущей и
+        // законно попадает в «будущую» очередь. Тест проверяет «прошедшую»
+        // и «будущую», а «Игру без почты» в noemail закрепляет
+        // NoEmailQueueListsGamesWithEmptyEmailOnly.
+        await Assert.That(all).Contains(TestData.PastWithoutEmailGameName);
         await Assert.That(all).Contains(TestData.FutureWithoutEmailGameName);
 
         await Assert.That(future).Contains(TestData.FutureWithoutEmailGameName);
-        await Assert.That(future).DoesNotContain(TestData.WithoutEmailGameName);
+        await Assert.That(future).DoesNotContain(TestData.PastWithoutEmailGameName);
     }
 
     [Test]
